@@ -146,6 +146,27 @@
     color: #475569;
 }
 
+.sidebar-node-delete {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: none;
+    transition: all 0.2s;
+}
+
+.sidebar-node:hover .sidebar-node-delete {
+    display: flex;
+}
+
+.sidebar-node-delete:hover {
+    color: #f43f5e;
+    background: #fff1f2;
+}
+
 .sidebar-node-content:hover .sidebar-node-label {
     color: #0f172a;
 }
@@ -176,8 +197,52 @@
     border-bottom: 1px solid #f1f5f9;
 }
 
-.sidebar-tree-section:last-child {
-    border-bottom: none;
+.sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    gap: 8px;
+}
+
+.add-tree-btn {
+    flex: 2;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.add-tree-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+}
+
+.add-sample-btn {
+    flex: 1;
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.add-sample-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
 }
 
 

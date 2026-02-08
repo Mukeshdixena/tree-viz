@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ChevronRight, ChevronDown, ListTree, Check } from 'lucide-react';
+import { ChevronRight, ChevronDown, ListTree, Check, Trash2 } from 'lucide-react';
 import { calculateProgress } from '../utils';
 import './Sidebar.css';
 
-const SidebarNode = ({ node, depth = 0, onToggle, isRoot = false, isActive = false, onSelect }) => {
+const SidebarNode = ({ node, depth = 0, onToggle, isRoot = false, isActive = false, onSelect, onDelete }) => {
     const [isOpen, setIsOpen] = useState(node.toggled || false);
     const hasChildren = node.children && node.children.length > 0;
     const progress = calculateProgress(node);
@@ -18,6 +18,11 @@ const SidebarNode = ({ node, depth = 0, onToggle, isRoot = false, isActive = fal
         } else {
             onToggle(node.name);
         }
+    };
+
+    const handleDelete = (e) => {
+        e.stopPropagation();
+        onDelete();
     };
 
     return (
@@ -42,6 +47,11 @@ const SidebarNode = ({ node, depth = 0, onToggle, isRoot = false, isActive = fal
                 {hasChildren && progress.percentage > 0 && (
                     <span className="sidebar-progress-badge">{progress.percentage}%</span>
                 )}
+                {isRoot && (
+                    <button className="sidebar-node-delete" onClick={handleDelete} title="Delete roadmap">
+                        <Trash2 size={12} />
+                    </button>
+                )}
             </div>
             {isOpen && hasChildren && (
                 <div className="sidebar-children">
@@ -54,7 +64,7 @@ const SidebarNode = ({ node, depth = 0, onToggle, isRoot = false, isActive = fal
     );
 };
 
-export default function Sidebar({ data, isOpen, activeTreeIndex, toggleSidebar, onToggle, onTreeSelect }) {
+export default function Sidebar({ data, isOpen, activeTreeIndex, toggleSidebar, onToggle, onTreeSelect, onAddTree, onNodeDelete }) {
     return (
         <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
             <div className="sidebar-header">
@@ -73,10 +83,17 @@ export default function Sidebar({ data, isOpen, activeTreeIndex, toggleSidebar, 
                                 isRoot={true}
                                 isActive={index === activeTreeIndex}
                                 onSelect={() => onTreeSelect(index)}
+                                onDelete={() => onNodeDelete(tree.name)}
                             />
                         </div>
                     ))}
                 </div>
+            </div>
+
+            <div className="sidebar-footer">
+                <button className="add-tree-btn" onClick={onAddTree}>
+                    <Check size={16} /> New Tree
+                </button>
             </div>
 
             <button className="sidebar-toggle-btn" onClick={toggleSidebar}>

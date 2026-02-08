@@ -48,11 +48,22 @@
   transform: translateX(100%);
 }
 
-.editor-toggle-btn {
+.top-actions {
   position: fixed;
   right: 24px;
   top: 24px;
   z-index: 1001;
+  display: flex;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.App.editor-open .top-actions {
+  right: 424px;
+}
+
+.editor-toggle-btn,
+.logout-btn {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -73,8 +84,12 @@
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
+.logout-btn:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
 .App.editor-open .editor-toggle-btn {
-  right: 424px;
   background: #252526;
   border-color: #444;
   color: #9cdcfe;
@@ -106,5 +121,38 @@
 
   .App.editor-open .main-content {
     margin-right: 0;
+  }
+}
+
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  background: #f8fafc;
+  color: #64748b;
+  gap: 16px;
+  font-family: inherit;
+}
+
+.no-data {
+  text-align: center;
+  color: #64748b;
+  padding: 100px 40px;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }

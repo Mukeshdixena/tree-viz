@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Check, Plus, Pencil, Trash2 } from 'lucide-react';
+import { ChevronRight, Check, Plus, Pencil, Trash2, Clock, Circle, FileText } from 'lucide-react';
 import { calculateProgress } from '../utils';
 import './Tree.css';
 
-const TreeNode = ({ node, onToggle, onEdit, onAdd, onDelete }) => {
+const TreeNode = ({ node, onToggle, onEdit, onAdd, onDelete, onStatusChange, onSelectNode }) => {
     const [expanded, setExpanded] = useState(node.toggled || false);
     const hasChildren = node.children && node.children.length > 0;
     const progress = calculateProgress(node);
@@ -13,8 +13,21 @@ const TreeNode = ({ node, onToggle, onEdit, onAdd, onDelete }) => {
         if (hasChildren) {
             setExpanded(!expanded);
         } else {
-            onToggle(node.name);
+            handleStatusCycle(e);
         }
+    };
+
+    const handleStatusCycle = (e) => {
+        e.stopPropagation();
+        if (hasChildren) return;
+
+        const currentStatus = node.status || (node.checked ? 'done' : 'todo');
+        let nextStatus = 'todo';
+        if (currentStatus === 'todo') nextStatus = 'in-progress';
+        else if (currentStatus === 'in-progress') nextStatus = 'done';
+        else nextStatus = 'todo';
+
+        onStatusChange(node.name, nextStatus);
     };
 
     const handleEdit = (e) => {
@@ -33,23 +46,41 @@ const TreeNode = ({ node, onToggle, onEdit, onAdd, onDelete }) => {
         onDelete(node.name);
     };
 
+    const handleSelect = (e) => {
+        e.stopPropagation();
+        onSelectNode(node);
+    };
+
+    const renderStatusIcon = () => {
+        const status = node.status || (node.checked ? 'done' : 'todo');
+        switch (status) {
+            case 'done': return <div className="status-icon done"><Check size={12} strokeWidth={4} /></div>;
+            case 'in-progress': return <div className="status-icon in-progress"><Clock size={12} strokeWidth={3} /></div>;
+            default: return <div className="status-icon todo"><Circle size={12} strokeWidth={2} /></div>;
+        }
+    };
+
     return (
         <div className="tree-node">
             <div
-                className={`node-content ${expanded ? 'expanded' : ''} ${hasChildren ? 'has-children' : 'leaf'} ${progress.percentage === 100 ? 'completed' : ''}`}
+                className={`node-content ${expanded ? 'expanded' : ''} ${hasChildren ? 'has-children' : 'leaf'} ${progress.percentage === 100 ? 'completed' : ''} status-${node.status || 'todo'}`}
                 onClick={handleNodeClick}
             >
                 <div className="node-info">
                     {!hasChildren && (
-                        <div className={`checkbox ${node.checked ? 'checked' : ''}`}>
-                            {node.checked && <Check size={12} strokeWidth={3} />}
+                        <div className="node-status-trigger" onClick={handleStatusCycle}>
+                            {renderStatusIcon()}
                         </div>
                     )}
-                    <span className="node-label">{node.name}</span>
+                    <div className="node-label-group">
+                        <span className="node-label">{node.name}</span>
+                        {node.notes && <FileText size={10} className="node-has-notes" />}
+                    </div>
                 </div>
 
                 <div className="node-actions-overlay">
                     <button className="node-action-btn edit" onClick={handleEdit} title="Edit Name"><Pencil size={12} /></button>
+                    <button className="node-action-btn details" onClick={handleSelect} title="View Details"><FileText size={12} /></button>
                     <button className="node-action-btn add" onClick={handleAdd} title="Add Child"><Plus size={12} /></button>
                     <button className="node-action-btn delete" onClick={handleDelete} title="Delete Node"><Trash2 size={12} /></button>
                 </div>
@@ -93,6 +124,8 @@ const TreeNode = ({ node, onToggle, onEdit, onAdd, onDelete }) => {
                                     onEdit={onEdit}
                                     onAdd={onAdd}
                                     onDelete={onDelete}
+                                    onStatusChange={onStatusChange}
+                                    onSelectNode={onSelectNode}
                                 />
                             </div>
                         ))}
@@ -103,7 +136,7 @@ const TreeNode = ({ node, onToggle, onEdit, onAdd, onDelete }) => {
     );
 };
 
-export default function Tree({ data, onToggle, onEdit, onAdd, onDelete }) {
+export default function Tree({ data, onToggle, onEdit, onAdd, onDelete, onStatusChange, onSelectNode }) {
     return (
         <div className="tree-wrapper">
             <TreeNode
@@ -112,6 +145,8 @@ export default function Tree({ data, onToggle, onEdit, onAdd, onDelete }) {
                 onEdit={onEdit}
                 onAdd={onAdd}
                 onDelete={onDelete}
+                onStatusChange={onStatusChange}
+                onSelectNode={onSelectNode}
             />
         </div>
     );

@@ -186,6 +186,65 @@
     background: #22c55e;
 }
 
+.status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.status-icon.todo {
+    color: #cbd5e1;
+}
+
+.status-icon.in-progress {
+    color: #3b82f6;
+}
+
+.status-icon.done {
+    color: #22c55e;
+}
+
+.node-status-trigger {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 6px;
+}
+
+.node-status-trigger:hover {
+    background: #f1f5f9;
+}
+
+.node-label-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.node-has-notes {
+    color: #94a3b8;
+}
+
+.node-content.status-in-progress {
+    border-left: 4px solid #3b82f6;
+}
+
+.node-content.status-done {
+    background: #f0fdf4;
+    border-color: #22c55e;
+}
+
+.node-action-btn.details:hover {
+    color: #8b5cf6;
+    border-color: #8b5cf6;
+}
+
 .progress-text {
     font-size: 11px;
     font-weight: 700;

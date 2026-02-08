@@ -1,19 +1,18 @@
 export const calculateProgress = (node) => {
-    if (!node.children || node.children.length === 0) {
-        return {
-            total: 1,
-            completed: node.checked ? 1 : 0,
-            percentage: node.checked ? 100 : 0
-        };
-    }
-
     let totalLeafNodes = 0;
-    let completedLeafNodes = 0;
+    let weightedCompletion = 0;
 
     const traverse = (n) => {
+        // A node is a leaf if it has no children OR an empty children array
         if (!n.children || n.children.length === 0) {
             totalLeafNodes++;
-            if (n.checked) completedLeafNodes++;
+
+            // Support legacy 'checked' and new 'status'
+            if (n.status === 'done' || n.checked === true) {
+                weightedCompletion += 1;
+            } else if (n.status === 'in-progress') {
+                weightedCompletion += 0.5;
+            }
             return;
         }
         n.children.forEach(traverse);
@@ -23,8 +22,8 @@ export const calculateProgress = (node) => {
 
     return {
         total: totalLeafNodes,
-        completed: completedLeafNodes,
-        percentage: totalLeafNodes > 0 ? Math.round((completedLeafNodes / totalLeafNodes) * 100) : 0
+        completed: weightedCompletion,
+        percentage: totalLeafNodes > 0 ? Math.round((weightedCompletion / totalLeafNodes) * 100) : 0
     };
 };
 
@@ -83,10 +82,47 @@ export const addNodeChild = (tree, parentName, childName) => {
     return newTree;
 };
 
+export const setNodeStatus = (tree, nodeName, status) => {
+    const newTree = JSON.parse(JSON.stringify(tree));
+    const traverse = (node) => {
+        if (node.name === nodeName) {
+            node.status = status;
+            node.checked = status === 'done';
+            return true;
+        }
+        if (node.children) {
+            for (let child of node.children) {
+                if (traverse(child)) return true;
+            }
+        }
+        return false;
+    };
+    traverse(newTree);
+    return newTree;
+};
+
+export const updateNodeData = (tree, nodeName, updates) => {
+    const newTree = JSON.parse(JSON.stringify(tree));
+    const traverse = (node) => {
+        if (node.name === nodeName) {
+            Object.assign(node, updates);
+            return true;
+        }
+        if (node.children) {
+            for (let child of node.children) {
+                if (traverse(child)) return true;
+            }
+        }
+        return false;
+    };
+    traverse(newTree);
+    return newTree;
+};
+
 export const deleteNodeInTree = (tree, nodeName) => {
+    if (!tree) return null;
     const newTree = JSON.parse(JSON.stringify(tree));
 
-    // If it's the root itself, return null to indicate full deletion
     if (newTree.name === nodeName) return null;
 
     const traverse = (parent, node, index) => {

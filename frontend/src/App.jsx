@@ -3,10 +3,11 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'r
 import Tree from './components/Tree';
 import Sidebar from './components/Sidebar';
 import JSONEditor from './components/JSONEditor';
+import LeafNodeDetails from './components/LeafNodeDetails';
 import Login from './components/Login';
 import Modal from './components/Modal';
-import { Settings, X, Loader2, LogOut } from 'lucide-react';
-import { toggleNodeChecked, editNodeName, addNodeChild, deleteNodeInTree } from './utils';
+import { Settings, X, Loader2, LogOut, FileText } from 'lucide-react';
+import { toggleNodeChecked, editNodeName, addNodeChild, deleteNodeInTree, setNodeStatus, updateNodeData, calculateProgress } from './utils';
 import './App.css';
 
 const API_BASE_URL = 'http://localhost:3001';
@@ -15,6 +16,8 @@ function MainApp() {
   const [data, setData] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedNode, setSelectedNode] = useState(null);
   const [activeTreeIndex, setActiveTreeIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -90,6 +93,12 @@ function MainApp() {
 
   const toggleEditor = () => {
     setIsEditorOpen(!isEditorOpen);
+    if (isDetailsOpen) setIsDetailsOpen(false);
+  };
+
+  const toggleDetails = () => {
+    setIsDetailsOpen(!isDetailsOpen);
+    if (isEditorOpen) setIsEditorOpen(false);
   };
 
   const handleDataUpdate = (newTreeData) => {
@@ -105,6 +114,30 @@ function MainApp() {
     newData[activeTreeIndex] = updatedTree;
     setData(newData);
     syncWithBackend(newData);
+  };
+
+  const handleNodeStatusChange = (nodeName, status) => {
+    const newData = [...data];
+    const updatedTree = setNodeStatus(newData[activeTreeIndex], nodeName, status);
+    newData[activeTreeIndex] = updatedTree;
+    setData(newData);
+    syncWithBackend(newData);
+  };
+
+  const handleNodeDataUpdate = (nodeName, updates) => {
+    const newData = [...data];
+    const updatedTree = updateNodeData(newData[activeTreeIndex], nodeName, updates);
+    newData[activeTreeIndex] = updatedTree;
+    setData(newData);
+    syncWithBackend(newData);
+  };
+
+  const handleNodeSelect = (node) => {
+    setSelectedNode(node);
+    if (!isDetailsOpen) {
+      setIsDetailsOpen(true);
+      setIsEditorOpen(false);
+    }
   };
 
   const handleNodeEdit = (oldName) => {
@@ -176,16 +209,55 @@ function MainApp() {
 
   const handleTreeSelect = (index) => {
     setActiveTreeIndex(index);
+    setSelectedNode(null);
   };
 
   const handleCreateTree = (name, isSample = false) => {
     const newTree = isSample ? {
-      name: name || 'Sample Roadmap',
+      name: name || 'Expert Web Development',
       toggled: true,
       checked: false,
       children: [
-        { name: 'Foundations', checked: false, toggled: true, children: [{ name: 'Step 1: Setup', checked: true }, { name: 'Step 2: Config', checked: false }] },
-        { name: 'Core Concepts', checked: false, toggled: false, children: [{ name: 'Advanced Logic', checked: false }] }
+        {
+          name: 'Frontend Mastery',
+          toggled: true,
+          children: [
+            {
+              name: 'React Fundamentals',
+              status: 'done',
+              priority: 'high',
+              notes: 'Master hooks, context API, and component lifecycle.',
+              links: [{ title: 'Official React Docs', url: 'https://react.dev' }],
+              dueDate: '2026-03-01'
+            },
+            {
+              name: 'State Management',
+              status: 'in-progress',
+              priority: 'medium',
+              notes: 'Exploring Redux Toolkit and Zustand for global state.',
+              links: [{ title: 'Redux Essentials', url: 'https://redux.js.org/tutorials/essentials/part-1-overview-concepts' }]
+            }
+          ]
+        },
+        {
+          name: 'Backend Systems',
+          toggled: false,
+          children: [
+            {
+              name: 'Node.js & Express',
+              status: 'todo',
+              priority: 'high',
+              notes: 'Build robust REST APIs and handle middleware.',
+              links: [{ title: 'Express Guide', url: 'https://expressjs.com/en/guide/routing.html' }]
+            },
+            {
+              name: 'Database Design',
+              status: 'todo',
+              priority: 'medium',
+              notes: 'Focus on schema optimization and indexing.'
+            }
+          ]
+        }
       ]
     } : {
       name: name || 'New Roadmap',
@@ -225,7 +297,7 @@ function MainApp() {
   }
 
   return (
-    <div className={`App ${isSidebarOpen ? 'sidebar-open' : ''} ${isEditorOpen ? 'editor-open' : ''}`}>
+    <div className={`App ${isSidebarOpen ? 'sidebar-open' : ''} ${isEditorOpen || isDetailsOpen ? 'editor-open' : ''}`}>
       <Sidebar
         data={data}
         isOpen={isSidebarOpen}
@@ -239,12 +311,33 @@ function MainApp() {
 
       <main className="main-content">
         <div className="top-actions">
-          <button className="logout-btn" onClick={handleLogout} title="Logout">
-            <LogOut size={20} />
-          </button>
-          <button className="editor-toggle-btn" onClick={toggleEditor} title="Toggle JSON Editor">
-            {isEditorOpen ? <X size={20} /> : <Settings size={20} />}
-          </button>
+          <div className="left-meta">
+            {data[activeTreeIndex] && (
+              <div className="overall-stats">
+                <span className="stats-label">Overall Progress:</span>
+                <span className="stats-value">{calculateProgress(data[activeTreeIndex]).percentage}%</span>
+              </div>
+            )}
+          </div>
+          <div className="right-controls">
+            <button className="logout-btn" onClick={handleLogout} title="Logout">
+              <LogOut size={20} />
+            </button>
+            <button
+              className={`editor-toggle-btn ${isDetailsOpen ? 'active' : ''}`}
+              onClick={toggleDetails}
+              title="Node Details"
+            >
+              <FileText size={20} />
+            </button>
+            <button
+              className={`editor-toggle-btn ${isEditorOpen ? 'active' : ''}`}
+              onClick={toggleEditor}
+              title="JSON Editor"
+            >
+              {isEditorOpen ? <X size={20} /> : <Settings size={20} />}
+            </button>
+          </div>
         </div>
 
         <div className="single-tree-container">
@@ -256,6 +349,8 @@ function MainApp() {
               onEdit={handleNodeEdit}
               onAdd={handleNodeAdd}
               onDelete={handleNodeDelete}
+              onStatusChange={handleNodeStatusChange}
+              onSelectNode={handleNodeSelect}
             />
           ) : (
             <div className="no-data">
@@ -266,8 +361,14 @@ function MainApp() {
         </div>
       </main>
 
-      <aside className={`right-panel ${isEditorOpen ? 'open' : 'closed'}`}>
-        {data[activeTreeIndex] && (
+      <aside className={`right-panel ${isEditorOpen || isDetailsOpen ? 'open' : 'closed'}`}>
+        {isDetailsOpen && selectedNode && (
+          <LeafNodeDetails
+            node={selectedNode}
+            onUpdateNode={handleNodeDataUpdate}
+          />
+        )}
+        {isEditorOpen && data[activeTreeIndex] && (
           <JSONEditor
             key={activeTreeIndex}
             data={data[activeTreeIndex]}

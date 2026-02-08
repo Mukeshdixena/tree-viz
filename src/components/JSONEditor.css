@@ -1,0 +1,122 @@
+.json-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-left: 1px solid #333;
+}
+
+.editor-header {
+    padding: 12px 16px;
+    background: #252526;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+}
+
+.editor-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #9cdcfe;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.header-btn {
+    background: #333;
+    border: 1px solid #444;
+    color: #ccc;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.header-btn:hover {
+    background: #444;
+    color: white;
+}
+
+.header-btn.secondary {
+    background: transparent;
+    border-color: #333;
+    color: #888;
+}
+
+.header-btn.secondary:hover {
+    border-color: #666;
+    color: #ccc;
+}
+
+
+.editor-wrapper {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+}
+
+.code-editor {
+    min-height: 100%;
+    outline: none;
+}
+
+.editor-footer {
+    padding: 8px 16px;
+    background: #007acc;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+}
+
+.status-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: #ff3333;
+    background: rgba(255, 0, 0, 0.1);
+    width: 100%;
+    margin: -8px -16px;
+    padding: 8px 16px;
+}
+
+.status-success {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: #ffffff;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.status-success.visible {
+    opacity: 1;
+}
+
+/* Scrollbar for editor */
+.editor-wrapper::-webkit-scrollbar {
+    width: 10px;
+}
+
+.editor-wrapper::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+.editor-wrapper::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 5px;
+}
+
+.editor-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #444;
+}

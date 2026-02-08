@@ -3,63 +3,89 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    padding: 50px;
-    background: #f8fafc;
-    /* Light slate background */
-    overflow: auto;
+    min-height: auto;
+    padding: 20px 50px;
+    overflow: visible;
 }
 
 /* Tree Node Structure */
 .tree-node {
     display: flex;
-    align-items: center;
-    /* Horizontally align parent with children block */
+    align-items: flex-start;
+    /* Align to top for better multi-line support */
     gap: 40px;
-    /* Space for connector logic */
     position: relative;
+    padding: 10px 0;
 }
 
 /* Node Content Box */
 .node-content {
     background: white;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 12px 20px;
-    min-width: 140px;
-    text-align: center;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 180px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     z-index: 10;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .node-content:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     border-color: #3b82f6;
-    /* Blue border on hover */
 }
 
 .node-content.expanded {
-    background: #eff6ff;
-    /* Blue-50 */
     border-color: #3b82f6;
-    color: #1e3a8a;
+    background: #ffffff;
+}
+
+.node-content.completed {
+    background: #f0fdf4;
+    border-color: #22c55e;
 }
 
 .node-content.has-children {
     padding-right: 12px;
 }
 
+.node-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #cbd5e1;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background: white;
+    flex-shrink: 0;
+}
+
+.checkbox.checked {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+}
+
 .node-label {
     font-weight: 600;
     font-size: 14px;
-    color: #334155;
+    color: #1e293b;
+    line-height: 1.4;
 }
 
 .expand-icon {
@@ -74,16 +100,61 @@
     color: #3b82f6;
 }
 
+.node-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.progress-mini {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.progress-bar-bg {
+    height: 6px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: #3b82f6;
+    border-radius: 10px;
+    transition: width 0.4s ease-out;
+}
+
+.completed .progress-bar-fill {
+    background: #22c55e;
+}
+
+.progress-text {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    min-width: 30px;
+}
+
+.completed .progress-text {
+    color: #15803d;
+}
+
 /* Children Container */
 .children-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 10px;
     /* Vertical spacing between siblings */
     position: relative;
-    padding-left: 20px;
+    padding-left: 30px;
     /* Space for vertical line and curve */
-    border-left: 2px solid #e2e8f0;
+    border-left: 2px dashed #e2e8f0;
     /* The main vertical line */
     /* To make connection better, we can hide the border and use pseudo elements on children? 
      Actually, let's try to center the vertical line relative to parent?
@@ -100,12 +171,11 @@
     content: '';
     position: absolute;
     right: -40px;
-    /* Reach the children container */
-    top: 50%;
+    top: 26px;
+    /* Center of the info section */
     width: 40px;
     height: 2px;
-    background: #e2e8f0;
-    /* Match border color */
+    background: #cbd5e1;
     z-index: 0;
 }
 
@@ -125,12 +195,12 @@
 .child-wrapper::before {
     content: '';
     position: absolute;
-    left: -20px;
-    /* From the border-left of parent container */
-    top: 50%;
-    width: 20px;
+    left: -30px;
+    top: 36px;
+    /* Centered relative to tree-node padding and node-info */
+    width: 30px;
     height: 2px;
-    background: #e2e8f0;
+    background: #cbd5e1;
 }
 
 /* Refined Connector logic to make it look like a tree */
@@ -144,14 +214,6 @@
 */
 
 /* Tweaks for premium feel */
-.node-content {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    justify-content: space-between;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
 .icon-wrapper {
     display: flex;
     align-items: center;
@@ -162,22 +224,4 @@
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-/* Adjust connector lines for cleaner look */
-.children-container {
-    padding-left: 20px;
-    border-left: 2px solid #e2e8f0;
-    margin-left: 0;
-}
-
-.child-wrapper {
-    padding-top: 10px;
-    padding-bottom: 10px;
-}
-
-.child-wrapper::before {
-    left: -20px;
-    /* Connect to border-left exactly */
-    width: 20px;
 }

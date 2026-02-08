@@ -1,0 +1,183 @@
+/* Tree Wrapper */
+.tree-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 50px;
+    background: #f8fafc;
+    /* Light slate background */
+    overflow: auto;
+}
+
+/* Tree Node Structure */
+.tree-node {
+    display: flex;
+    align-items: center;
+    /* Horizontally align parent with children block */
+    gap: 40px;
+    /* Space for connector logic */
+    position: relative;
+}
+
+/* Node Content Box */
+.node-content {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 20px;
+    min-width: 140px;
+    text-align: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.node-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-color: #3b82f6;
+    /* Blue border on hover */
+}
+
+.node-content.expanded {
+    background: #eff6ff;
+    /* Blue-50 */
+    border-color: #3b82f6;
+    color: #1e3a8a;
+}
+
+.node-content.has-children {
+    padding-right: 12px;
+}
+
+.node-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #334155;
+}
+
+.expand-icon {
+    font-size: 18px;
+    margin-left: 8px;
+    color: #cbd5e1;
+    transition: transform 0.3s;
+}
+
+.node-content.expanded .expand-icon {
+    transform: rotate(90deg);
+    color: #3b82f6;
+}
+
+/* Children Container */
+.children-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    /* Vertical spacing between siblings */
+    position: relative;
+    padding-left: 20px;
+    /* Space for vertical line and curve */
+    border-left: 2px solid #e2e8f0;
+    /* The main vertical line */
+    /* To make connection better, we can hide the border and use pseudo elements on children? 
+     Actually, let's try to center the vertical line relative to parent?
+     If parent is centered, the vertical line (border-left) is to the right of parent.
+     We need a horizontal line from parent to this border. 
+  */
+}
+
+/* Connector from Parent to Children Container */
+/* We need a line from Right of Parent to Left of Children Container */
+/* Since they are flex items in .tree-node, we can put a pseudo-element on .node-content::after */
+
+.node-content.has-children::after {
+    content: '';
+    position: absolute;
+    right: -40px;
+    /* Reach the children container */
+    top: 50%;
+    width: 40px;
+    height: 2px;
+    background: #e2e8f0;
+    /* Match border color */
+    z-index: 0;
+}
+
+.node-content.expanded::after {
+    background: #3b82f6;
+    /* Highlight path if expanded? Optional */
+}
+
+/* Individual Child Wrapper */
+.child-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+/* Horizontal line from Vertical Bar (border-left of container) to Child Node */
+.child-wrapper::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    /* From the border-left of parent container */
+    top: 50%;
+    width: 20px;
+    height: 2px;
+    background: #e2e8f0;
+}
+
+/* Refined Connector logic to make it look like a tree */
+/* Hide the main vertical border if we want curved lines, but for straight lines recursion:
+   The vertical line (border-left of children-container) spans entire height.
+   This looks a bit "blocky" but is correct for directory trees.
+   
+   To make it look like "Mind Map" (branching from center):
+   We need SVG or complex CSS.
+   Let's stick to the blocky tree structure as it's robust.
+*/
+
+/* Tweaks for premium feel */
+.node-content {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    justify-content: space-between;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.leaf-node-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Adjust connector lines for cleaner look */
+.children-container {
+    padding-left: 20px;
+    border-left: 2px solid #e2e8f0;
+    margin-left: 0;
+}
+
+.child-wrapper {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.child-wrapper::before {
+    left: -20px;
+    /* Connect to border-left exactly */
+    width: 20px;
+}

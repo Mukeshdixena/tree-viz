@@ -15,11 +15,11 @@
 }
 
 .single-tree-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+  height: calc(100vh - 80px);
+  /* Adjust for top-actions space */
   width: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
 
@@ -127,17 +127,15 @@
   color: #ffffff;
 }
 
+/* Responsive Adjustments */
 @media (max-width: 1024px) {
   .right-panel {
-    width: 300px;
+    width: 350px;
   }
 
   .App.editor-open .main-content {
-    margin-right: 300px;
-  }
-
-  .App.editor-open .editor-toggle-btn {
-    right: 324px;
+    margin-right: 0;
+    /* Change to 0 for tablet to give more space */
   }
 }
 
@@ -146,8 +144,43 @@
     margin-left: 0;
   }
 
+  .top-actions {
+    margin: 10px;
+    padding: 8px 16px;
+    top: 10px;
+  }
+
+  .stats-label {
+    display: none;
+    /* Hide label on mobile */
+  }
+
+  .stats-value {
+    font-size: 0.9rem;
+  }
+
+  .right-panel {
+    width: 100%;
+    z-index: 2100;
+    /* Above sidebar toggle */
+  }
+
+  .single-tree-container {
+    padding: 20px;
+    justify-content: flex-start;
+    /* Start from left on mobile */
+    align-items: flex-start;
+  }
+}
+
+/* Base state for main content when sidebars are open on large screens */
+@media (min-width: 769px) {
+  .App.sidebar-open .main-content {
+    margin-left: 300px;
+  }
+
   .App.editor-open .main-content {
-    margin-right: 0;
+    margin-right: 400px;
   }
 }
 

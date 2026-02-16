@@ -6,6 +6,7 @@ import JSONEditor from './components/JSONEditor';
 import LeafNodeDetails from './components/LeafNodeDetails';
 import Login from './components/Login';
 import Modal from './components/Modal';
+import Viewport from './components/Viewport';
 import { Settings, X, Loader2, LogOut, FileText } from 'lucide-react';
 import { toggleNodeChecked, editNodeName, addNodeChild, deleteNodeInTree, setNodeStatus, updateNodeData, calculateProgress } from './utils';
 import './App.css';
@@ -210,6 +211,9 @@ function MainApp() {
   const handleTreeSelect = (index) => {
     setActiveTreeIndex(index);
     setSelectedNode(null);
+    if (window.innerWidth <= 768) {
+      setIsSidebarOpen(false);
+    }
   };
 
   const handleCreateTree = (name, isSample = false) => {
@@ -342,16 +346,18 @@ function MainApp() {
 
         <div className="single-tree-container">
           {data[activeTreeIndex] ? (
-            <Tree
-              key={activeTreeIndex}
-              data={data[activeTreeIndex]}
-              onToggle={handleNodeToggle}
-              onEdit={handleNodeEdit}
-              onAdd={handleNodeAdd}
-              onDelete={handleNodeDelete}
-              onStatusChange={handleNodeStatusChange}
-              onSelectNode={handleNodeSelect}
-            />
+            <Viewport>
+              <Tree
+                key={activeTreeIndex}
+                data={data[activeTreeIndex]}
+                onToggle={handleNodeToggle}
+                onEdit={handleNodeEdit}
+                onAdd={handleNodeAdd}
+                onDelete={handleNodeDelete}
+                onStatusChange={handleNodeStatusChange}
+                onSelectNode={handleNodeSelect}
+              />
+            </Viewport>
           ) : (
             <div className="no-data">
               <h3>No Trees Found</h3>
@@ -402,4 +408,3 @@ function App() {
 }
 
 export default App;
-

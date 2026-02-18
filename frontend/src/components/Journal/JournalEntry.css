@@ -1,0 +1,132 @@
+.journal-container {
+    display: flex;
+    height: 100vh;
+    background: var(--bg-secondary);
+}
+
+.journal-sidebar {
+    width: 300px;
+    background: var(--bg-primary);
+    border-right: 1px solid var(--border-color);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.new-entry-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.8rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+}
+
+.new-entry-btn:hover {
+    background: var(--primary-hover);
+}
+
+.entry-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-y: auto;
+}
+
+.entry-item {
+    padding: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: var(--text-secondary);
+}
+
+.entry-item:hover {
+    background: var(--bg-tertiary);
+}
+
+.entry-item.active {
+    background: var(--primary-light);
+    border-left: 4px solid var(--primary);
+}
+
+.entry-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.entry-title {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.journal-editor {
+    flex: 1;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+}
+
+.title-input {
+    font-size: 2rem;
+    font-weight: 700;
+    border: none;
+    background: transparent;
+    outline: none;
+    color: var(--text-primary);
+}
+
+.title-input::placeholder {
+    color: var(--text-muted);
+}
+
+.content-area {
+    flex: 1;
+    border: none;
+    background: transparent;
+    resize: none;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    outline: none;
+}
+
+.save-btn {
+    align-self: flex-end;
+    background: var(--success);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    gap: 1rem;
+}

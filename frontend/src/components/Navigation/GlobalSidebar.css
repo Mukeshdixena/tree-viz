@@ -1,0 +1,127 @@
+.global-sidebar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 72px;
+    height: 100vh;
+    /* Use tertiary background for sidebar to distinguish from main content */
+    background-color: var(--bg-tertiary);
+    border-right: 1px solid var(--border-color);
+    padding: 1.5rem 0.5rem;
+    z-index: 50;
+    position: relative;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
+}
+
+.app-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.app-logo:hover {
+    transform: scale(1.1);
+}
+
+.logo-icon {
+    font-size: 1.75rem;
+    filter: drop-shadow(0 0 8px var(--primary));
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+}
+
+.nav-item {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.25s ease-out;
+}
+
+.nav-item:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.nav-item.active {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.nav-item svg {
+    z-index: 2;
+}
+
+.active-indicator {
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 24px;
+    background: var(--primary);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 10px var(--primary);
+}
+
+.tooltip {
+    position: absolute;
+    left: 64px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-10px);
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+}
+
+.nav-item:hover .tooltip {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.bottom-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: auto;
+    align-items: center;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+.nav-item.logout:hover {
+    color: var(--danger);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* Dark mode overrides (for specific overrides if variables aren't enough) */
+body.dark-mode .nav-item.active {
+    background: rgba(59, 130, 246, 0.15);
+    /* More subtle active state in dark mode */
+}

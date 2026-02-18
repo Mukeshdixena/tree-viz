@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Loader2 } from 'lucide-react';
+import './Login.css';
 
 const Login = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -37,100 +38,32 @@ const Login = () => {
     };
 
     return (
-        <div className="login-page-container" style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#020617',
-            position: 'relative',
-            overflow: 'hidden',
-            fontFamily: 'Inter, system-ui, sans-serif'
-        }}>
-            {/* Background Decorations */}
-            <div style={{
-                position: 'absolute',
-                inset: 0,
-                backgroundImage: 'radial-gradient(#1e293b 1px, transparent 0)',
-                backgroundSize: '40px 40px',
-                opacity: 0.2,
-                zIndex: 0
-            }}></div>
-            <div style={{
-                position: 'absolute',
-                top: '-10%',
-                left: '-10%',
-                width: '40%',
-                height: '40%',
-                backgroundColor: 'rgba(59, 130, 246, 0.08)',
-                filter: 'blur(120px)',
-                borderRadius: '50%',
-                zIndex: 0
-            }}></div>
-            <div style={{
-                position: 'absolute',
-                bottom: '-10%',
-                right: '-10%',
-                width: '40%',
-                height: '40%',
-                backgroundColor: 'rgba(37, 99, 235, 0.08)',
-                filter: 'blur(120px)',
-                borderRadius: '50%',
-                zIndex: 0
-            }}></div>
+        <div className="login-page-container">
+            <div className="login-bg-grid"></div>
+            <div className="login-blob-1"></div>
+            <div className="login-blob-2"></div>
 
-            <div style={{
-                maxWidth: '440px',
-                width: '100%',
-                zIndex: 10,
-                padding: '24px'
-            }}>
-                <div style={{
-                    backgroundColor: 'rgba(15, 23, 42, 0.8)',
-                    backdropFilter: 'blur(20px)',
-                    borderRadius: '24px',
-                    boxShadow: '0 0 50px -12px rgba(0,0,0,0.5)',
-                    padding: '48px',
-                    border: '1px solid #1e293b',
-                    position: 'relative',
-                    overflow: 'hidden'
-                }}>
-                    <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '2px',
-                        background: 'linear-gradient(90deg, transparent, #3b82f6, transparent)'
-                    }}></div>
+            <div className="login-card-wrapper">
+                <div className="login-card">
+                    <div className="login-card-top-line"></div>
 
-                    <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                        <div style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '64px',
-                            height: '64px',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderRadius: '16px',
-                            marginBottom: '24px',
-                            border: '1px solid rgba(59, 130, 246, 0.2)'
-                        }}>
-                            <Lock style={{ color: '#3b82f6', width: '32px', height: '32px' }} />
+                    <div className="login-header">
+                        <div className="login-icon-box">
+                            <Lock size={32} />
                         </div>
-                        <h2 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-0.025em', color: 'white', marginBottom: '8px' }}>
+                        <h2 className="login-title">
                             {isLogin ? 'Sign In' : 'Join Us'}
                         </h2>
-                        <p style={{ color: '#94a3b8', fontWeight: 500 }}>
+                        <p className="login-subtitle">
                             {isLogin ? 'Access your roadmaps' : 'Start building your future'}
                         </p>
                     </div>
 
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <label style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginLeft: '4px' }}>Username</label>
-                            <div style={{ position: 'relative' }}>
-                                <div style={{ position: 'absolute', insetY: 0, left: '16px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', pointerEvents: 'none', color: '#475569' }}>
+                    <form onSubmit={handleSubmit} className="login-form">
+                        <div className="form-group">
+                            <label className="form-label">Username</label>
+                            <div className="input-wrapper">
+                                <div className="input-icon">
                                     <User size={18} />
                                 </div>
                                 <input
@@ -139,34 +72,16 @@ const Login = () => {
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                     autoComplete="off"
-                                    style={{
-                                        width: '100%',
-                                        backgroundColor: 'rgba(2, 6, 23, 0.5)',
-                                        border: '1px solid rgba(30, 41, 59, 0.5)',
-                                        borderRadius: '12px',
-                                        padding: '16px 16px 16px 48px',
-                                        color: 'white',
-                                        outline: 'none',
-                                        transition: 'all 0.2s',
-                                        fontSize: '15px'
-                                    }}
+                                    className="login-input"
                                     placeholder="Your username"
-                                    onFocus={(e) => {
-                                        e.target.style.borderColor = '#3b82f6';
-                                        e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = 'rgba(30, 41, 59, 0.5)';
-                                        e.target.style.boxShadow = 'none';
-                                    }}
                                 />
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <label style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginLeft: '4px' }}>Password</label>
-                            <div style={{ position: 'relative' }}>
-                                <div style={{ position: 'absolute', insetY: 0, left: '16px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', pointerEvents: 'none', color: '#475569' }}>
+                        <div className="form-group">
+                            <label className="form-label">Password</label>
+                            <div className="input-wrapper">
+                                <div className="input-icon">
                                     <Lock size={18} />
                                 </div>
                                 <input
@@ -174,40 +89,14 @@ const Login = () => {
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        backgroundColor: 'rgba(2, 6, 23, 0.5)',
-                                        border: '1px solid rgba(30, 41, 59, 0.5)',
-                                        borderRadius: '12px',
-                                        padding: '16px 16px 16px 48px',
-                                        color: 'white',
-                                        outline: 'none',
-                                        transition: 'all 0.2s',
-                                        fontSize: '15px'
-                                    }}
+                                    className="login-input"
                                     placeholder="••••••••"
-                                    onFocus={(e) => {
-                                        e.target.style.borderColor = '#3b82f6';
-                                        e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = 'rgba(30, 41, 59, 0.5)';
-                                        e.target.style.boxShadow = 'none';
-                                    }}
                                 />
                             </div>
                         </div>
 
                         {error && (
-                            <div style={{
-                                padding: '16px',
-                                borderRadius: '12px',
-                                fontSize: '14px',
-                                fontWeight: 500,
-                                backgroundColor: error.includes('successful') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)',
-                                color: error.includes('successful') ? '#10b981' : '#f43f5e',
-                                border: `1px solid ${error.includes('successful') ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.2)'}`
-                            }}>
+                            <div className={error.includes('successful') ? 'login-success' : 'login-error'}>
                                 {error}
                             </div>
                         )}
@@ -215,47 +104,16 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            style={{
-                                width: '100%',
-                                backgroundColor: '#2563eb',
-                                color: 'white',
-                                fontWeight: 700,
-                                padding: '16px',
-                                borderRadius: '12px',
-                                border: 'none',
-                                cursor: loading ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.2s',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '12px',
-                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                                opacity: loading ? 0.7 : 1,
-                                fontSize: '14px',
-                                letterSpacing: '0.05em'
-                            }}
-                            onMouseOver={(e) => { if (!loading) e.target.style.backgroundColor = '#1d4ed8'; }}
-                            onMouseOut={(e) => { if (!loading) e.target.style.backgroundColor = '#2563eb'; }}
+                            className="login-btn"
                         >
-                            {loading ? <Loader2 style={{ animation: 'spin 1s linear infinite' }} size={20} /> : (isLogin ? 'SIGN IN' : 'CREATE ACCOUNT')}
+                            {loading ? <Loader2 className="animate-spin" size={20} /> : (isLogin ? 'SIGN IN' : 'CREATE ACCOUNT')}
                         </button>
                     </form>
 
-                    <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #1e293b', textAlign: 'center' }}>
+                    <div className="toggle-auth-box">
                         <button
                             onClick={() => setIsLogin(!isLogin)}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#64748b',
-                                cursor: 'pointer',
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                transition: 'color 0.2s',
-                                letterSpacing: '0.05em'
-                            }}
-                            onMouseOver={(e) => e.target.style.color = '#3b82f6'}
-                            onMouseOut={(e) => e.target.style.color = '#64748b'}
+                            className="toggle-auth-btn"
                         >
                             {isLogin ? "DON'T HAVE AN ACCOUNT? SIGN UP" : 'ALREADY HAVE AN ACCOUNT? SIGN IN'}
                         </button>
@@ -267,6 +125,9 @@ const Login = () => {
                     @keyframes spin {
                         from { transform: rotate(0deg); }
                         to { transform: rotate(360deg); }
+                    }
+                    .animate-spin {
+                        animation: spin 1s linear infinite;
                     }
                 `}
             </style>

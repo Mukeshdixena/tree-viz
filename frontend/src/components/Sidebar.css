@@ -1,25 +1,24 @@
 .sidebar {
     width: 300px;
-    height: 100vh;
-    background: #ffffff;
-    border-right: 1px solid #e2e8f0;
+    height: 100%;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    position: fixed;
-    left: 0;
-    top: 0;
-    z-index: 1000;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.02);
+    /* Removed fixed positioning to prevent overlap */
+    position: relative;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
+    z-index: 10;
 }
 
 .sidebar.closed {
-    transform: translateX(-100%);
+    margin-left: -300px;
+    /* transform is optional if margin does the job, but can be kept for visual slide */
 }
 
 .sidebar-header {
     padding: 24px 20px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-title {
@@ -28,12 +27,12 @@
     gap: 12px;
     font-size: 1.1rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-primary);
     letter-spacing: -0.01em;
 }
 
 .sidebar-title-icon {
-    color: #3b82f6;
+    color: var(--primary);
 }
 
 .sidebar-content {
@@ -56,29 +55,30 @@
     transition: all 0.2s ease;
     border-radius: 4px;
     margin: 2px 8px;
+    color: var(--text-secondary);
 }
 
 .sidebar-node-content:hover {
-    background-color: #f8fafc;
-    color: #3b82f6;
+    background-color: var(--bg-tertiary);
+    color: var(--primary);
 }
 
 .sidebar-node-content.active {
-    color: #1e40af;
+    color: var(--primary-hover);
 }
 
 .sidebar-node-content.completed {
-    background-color: #f0fdf4 !important;
+    background-color: rgba(16, 185, 129, 0.1) !important;
 }
 
 .sidebar-node-content.completed .sidebar-node-label {
-    color: #15803d;
+    color: var(--success);
     text-decoration: line-through;
-    opacity: 0.6;
+    opacity: 0.8;
 }
 
 .sidebar-node-content.completed:hover {
-    background-color: #dcfce7 !important;
+    background-color: rgba(16, 185, 129, 0.2) !important;
 }
 
 
@@ -92,18 +92,18 @@
 .checkbox-sm {
     width: 16px;
     height: 16px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--text-muted);
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: white;
+    background: var(--bg-primary);
     transition: all 0.2s;
 }
 
 .checkbox-sm.checked {
-    background: #22c55e;
-    border-color: #22c55e;
+    background: var(--success);
+    border-color: var(--success);
     color: white;
 }
 
@@ -111,46 +111,46 @@
     margin-left: auto;
     font-size: 10px;
     font-weight: 700;
-    color: #64748b;
-    background: #f1f5f9;
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
     padding: 2px 6px;
     border-radius: 10px;
 }
 
 .completed .sidebar-progress-badge {
-    background: #dcfce7;
-    color: #15803d;
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--success);
 }
 
 .toggle-icon {
-    color: #94a3b8;
+    color: var(--text-muted);
     display: flex;
     align-items: center;
 }
 
 
 .sidebar-node-content:hover .toggle-icon {
-    color: #3b82f6;
+    color: var(--primary);
 }
 
 .bullet-point {
     width: 6px;
     height: 6px;
-    background-color: #cbd5e1;
+    background-color: var(--text-muted);
     border-radius: 50%;
 }
 
 .sidebar-node-label {
     font-size: 0.9rem;
     font-weight: 500;
-    color: #475569;
+    color: inherit;
 }
 
 .sidebar-node-delete {
     margin-left: auto;
     background: transparent;
     border: none;
-    color: #94a3b8;
+    color: var(--text-muted);
     cursor: pointer;
     padding: 4px;
     border-radius: 4px;
@@ -163,22 +163,22 @@
 }
 
 .sidebar-node-delete:hover {
-    color: #f43f5e;
-    background: #fff1f2;
+    color: var(--danger);
+    background: rgba(239, 68, 68, 0.1);
 }
 
 .sidebar-node-content:hover .sidebar-node-label {
-    color: #0f172a;
+    color: var(--text-primary);
 }
 
 .sidebar-node.selected>.sidebar-node-content {
-    background-color: #eff6ff !important;
-    border-left: 3px solid #3b82f6;
+    background-color: var(--primary-light) !important;
+    border-left: 3px solid var(--primary);
     margin-left: 5px;
 }
 
 .sidebar-node.selected .sidebar-node-label {
-    color: #1e40af;
+    color: var(--primary);
     font-weight: 700;
 }
 
@@ -187,26 +187,26 @@
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
-    color: #64748b;
+    color: var(--text-muted);
     margin-top: 4px;
 }
 
 .sidebar-tree-section {
     margin-bottom: 32px;
     padding-bottom: 24px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-footer {
     padding: 16px;
-    border-top: 1px solid #f1f5f9;
+    border-top: 1px solid var(--border-color);
     display: flex;
     gap: 8px;
 }
 
 .add-tree-btn {
     flex: 2;
-    background: #3b82f6;
+    background: var(--primary);
     color: white;
     border: none;
     padding: 8px 12px;
@@ -222,16 +222,16 @@
 }
 
 .add-tree-btn:hover {
-    background: #2563eb;
+    background: var(--primary-hover);
     transform: translateY(-1px);
     box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
 }
 
 .add-sample-btn {
     flex: 1;
-    background: #f1f5f9;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
     padding: 8px;
     border-radius: 6px;
     font-size: 0.8rem;
@@ -241,8 +241,8 @@
 }
 
 .add-sample-btn:hover {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: var(--border-color);
+    color: var(--text-primary);
 }
 
 
@@ -254,8 +254,8 @@
     top: 24px;
     width: 36px;
     height: 36px;
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
     border-left: none;
     border-radius: 0 8px 8px 0;
     display: flex;
@@ -263,13 +263,13 @@
     justify-content: center;
     cursor: pointer;
     box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05);
-    color: #64748b;
+    color: var(--text-muted);
     transition: all 0.2s ease;
 }
 
 .sidebar-toggle-btn:hover {
-    color: #3b82f6;
-    background: #f8fafc;
+    color: var(--primary);
+    background: var(--bg-secondary);
 }
 
 .rotate-180 {
@@ -286,10 +286,10 @@
 }
 
 .sidebar-content::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
+    background: var(--border-color);
     border-radius: 10px;
 }
 
 .sidebar-content::-webkit-scrollbar-thumb:hover {
-    background: #cbd5e1;
+    background: var(--text-muted);
 }

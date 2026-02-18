@@ -20,12 +20,12 @@
 
 /* Node Content Box */
 .node-content {
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 16px;
     min-width: 180px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 6px -1px var(--shadow-sm);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -33,12 +33,13 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    color: var(--text-primary);
 }
 
 .node-content:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    border-color: #3b82f6;
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
 }
 
 .node-actions-overlay {
@@ -66,11 +67,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #e2e8f0;
-    background: white;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    box-shadow: 0 4px 6px -1px var(--shadow-sm);
     cursor: pointer;
-    color: #64748b;
+    color: var(--text-muted);
     transition: all 0.2s;
 }
 
@@ -79,28 +80,28 @@
 }
 
 .node-action-btn.edit:hover {
-    color: #3b82f6;
-    border-color: #3b82f6;
+    color: var(--primary);
+    border-color: var(--primary);
 }
 
 .node-action-btn.add:hover {
-    color: #10b981;
-    border-color: #10b981;
+    color: var(--success);
+    border-color: var(--success);
 }
 
 .node-action-btn.delete:hover {
-    color: #f43f5e;
-    border-color: #f43f5e;
+    color: var(--danger);
+    border-color: var(--danger);
 }
 
 .node-content.expanded {
-    border-color: #3b82f6;
-    background: #ffffff;
+    border-color: var(--primary);
+    background: var(--bg-primary);
 }
 
 .node-content.completed {
-    background: #f0fdf4;
-    border-color: #22c55e;
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--success);
 }
 
 .node-content.has-children {
@@ -117,39 +118,39 @@
 .checkbox {
     width: 20px;
     height: 20px;
-    border: 2px solid #cbd5e1;
+    border: 2px solid var(--text-secondary);
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
-    background: white;
+    background: var(--bg-primary);
     flex-shrink: 0;
 }
 
 .checkbox.checked {
-    background: #22c55e;
-    border-color: #22c55e;
+    background: var(--success);
+    border-color: var(--success);
     color: white;
 }
 
 .node-label {
     font-weight: 600;
     font-size: 14px;
-    color: #1e293b;
+    color: var(--text-primary);
     line-height: 1.4;
 }
 
 .expand-icon {
     font-size: 18px;
     margin-left: 8px;
-    color: #cbd5e1;
+    color: var(--text-secondary);
     transition: transform 0.3s;
 }
 
 .node-content.expanded .expand-icon {
     transform: rotate(90deg);
-    color: #3b82f6;
+    color: var(--primary);
 }
 
 .node-meta {
@@ -169,7 +170,7 @@
 
 .progress-bar-bg {
     height: 6px;
-    background: #f1f5f9;
+    background: var(--bg-tertiary);
     border-radius: 10px;
     flex: 1;
     overflow: hidden;
@@ -177,13 +178,13 @@
 
 .progress-bar-fill {
     height: 100%;
-    background: #3b82f6;
+    background: var(--primary);
     border-radius: 10px;
     transition: width 0.4s ease-out;
 }
 
 .completed .progress-bar-fill {
-    background: #22c55e;
+    background: var(--success);
 }
 
 .status-icon {
@@ -197,15 +198,15 @@
 }
 
 .status-icon.todo {
-    color: #cbd5e1;
+    color: var(--text-secondary);
 }
 
 .status-icon.in-progress {
-    color: #3b82f6;
+    color: var(--primary);
 }
 
 .status-icon.done {
-    color: #22c55e;
+    color: var(--success);
 }
 
 .node-status-trigger {
@@ -218,7 +219,7 @@
 }
 
 .node-status-trigger:hover {
-    background: #f1f5f9;
+    background: var(--bg-tertiary);
 }
 
 .node-label-group {
@@ -228,16 +229,16 @@
 }
 
 .node-has-notes {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .node-content.status-in-progress {
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid var(--primary);
 }
 
 .node-content.status-done {
-    background: #f0fdf4;
-    border-color: #22c55e;
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--success);
 }
 
 .node-action-btn.details:hover {
@@ -248,12 +249,12 @@
 .progress-text {
     font-size: 11px;
     font-weight: 700;
-    color: #64748b;
+    color: var(--text-muted);
     min-width: 30px;
 }
 
 .completed .progress-text {
-    color: #15803d;
+    color: var(--success);
 }
 
 /* Children Container */
@@ -265,19 +266,10 @@
     position: relative;
     padding-left: 30px;
     /* Space for vertical line and curve */
-    border-left: 2px dashed #e2e8f0;
-    /* The main vertical line */
-    /* To make connection better, we can hide the border and use pseudo elements on children? 
-     Actually, let's try to center the vertical line relative to parent?
-     If parent is centered, the vertical line (border-left) is to the right of parent.
-     We need a horizontal line from parent to this border. 
-  */
+    border-left: 2px dashed var(--border-color);
 }
 
 /* Connector from Parent to Children Container */
-/* We need a line from Right of Parent to Left of Children Container */
-/* Since they are flex items in .tree-node, we can put a pseudo-element on .node-content::after */
-
 .node-content.has-children::after {
     content: '';
     position: absolute;
@@ -286,13 +278,12 @@
     /* Center of the info section */
     width: 40px;
     height: 2px;
-    background: #cbd5e1;
+    background: var(--text-secondary);
     z-index: 0;
 }
 
 .node-content.expanded::after {
-    background: #3b82f6;
-    /* Highlight path if expanded? Optional */
+    background: var(--primary);
 }
 
 /* Individual Child Wrapper */
@@ -311,20 +302,9 @@
     /* Centered relative to tree-node padding and node-info */
     width: 30px;
     height: 2px;
-    background: #cbd5e1;
+    background: var(--text-secondary);
 }
 
-/* Refined Connector logic to make it look like a tree */
-/* Hide the main vertical border if we want curved lines, but for straight lines recursion:
-   The vertical line (border-left of children-container) spans entire height.
-   This looks a bit "blocky" but is correct for directory trees.
-   
-   To make it look like "Mind Map" (branching from center):
-   We need SVG or complex CSS.
-   Let's stick to the blocky tree structure as it's robust.
-*/
-
-/* Tweaks for premium feel */
 .icon-wrapper {
     display: flex;
     align-items: center;

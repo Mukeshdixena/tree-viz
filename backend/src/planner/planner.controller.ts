@@ -17,6 +17,11 @@ export class PlannerController {
         return this.plannerService.findByDate(req.user.userId, targetDate);
     }
 
+    @Get('month')
+    async getMonthSummary(@Request() req, @Query('year') year: string, @Query('month') month: string) {
+        return this.plannerService.findMonthSummary(req.user.userId, parseInt(year), parseInt(month));
+    }
+
     @Put()
     async updatePlanner(@Request() req, @Body() body: any) {
         const result = await this.plannerService.update(req.user.userId, body.date, body);

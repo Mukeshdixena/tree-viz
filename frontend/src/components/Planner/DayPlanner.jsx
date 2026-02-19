@@ -10,6 +10,7 @@ const ICON_MAP = {
     Sunrise: <Sunrise size={16} />,
     Coffee: <Coffee size={16} />,
     Zap: <Zap size={16} />,
+    Layout: <Layout size={16} />,
 };
 
 const TAGS = {
@@ -24,6 +25,15 @@ const TAGS = {
     'family': { label: 'Family', color: '#ec4899', bg: '#fdf2f8' },
 };
 
+const PRESETS = [
+    { label: 'Sleep', plan: 'Sleep', icon: 'Moon' },
+    { label: 'Work', plan: 'Work Session', icon: 'Sun' },
+    { label: 'DSA', plan: 'DSA Practice', icon: 'Zap' },
+    { label: 'English', plan: 'English Learning', icon: 'Layout' },
+    { label: 'Fitness', plan: 'Exercise / Gym', icon: 'Zap' },
+    { label: 'Rest', plan: 'Rest / Break', icon: 'Coffee' },
+];
+
 const DayPlanner = () => {
     const [planner, setPlanner] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -36,6 +46,7 @@ const DayPlanner = () => {
     const [newRoutineName, setNewRoutineName] = useState('');
     const [viewMode, setViewMode] = useState('day'); // 'day' or 'month'
     const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [monthData, setMonthData] = useState([]);
 
     const fetchPlanner = async (date) => {
         setLoading(true);
@@ -62,10 +73,25 @@ const DayPlanner = () => {
         }
     };
 
+    const fetchMonthData = async (monthDate) => {
+        try {
+            const year = monthDate.getFullYear();
+            const month = monthDate.getMonth();
+            const data = await api.get(`/planner/month?year=${year}&month=${month}`);
+            if (data) setMonthData(data);
+        } catch (error) {
+            console.error("Error fetching month data:", error);
+        }
+    };
+
     useEffect(() => {
         fetchPlanner(selectedDate);
         fetchRoutines();
     }, [selectedDate]);
+
+    useEffect(() => {
+        fetchMonthData(currentMonth);
+    }, [currentMonth]);
 
     const handleUpdate = async (updatedPlanner) => {
         try {
@@ -150,7 +176,7 @@ const DayPlanner = () => {
             const routineData = {
                 name: newRoutineName,
                 icon: 'Sun',
-                blocks: planner.blocks.map(({ startTime, endTime, plan, tag, target }) => ({ startTime, endTime, plan, tag, target }))
+                blocks: planner.blocks.map(({ startTime, endTime, plan }) => ({ startTime, endTime, plan }))
             };
             await api.post('/routines', routineData);
             setNewRoutineName('');
@@ -193,7 +219,7 @@ const DayPlanner = () => {
         }
         setEditingRoutine({
             ...editingRoutine,
-            blocks: [...blocks, { startTime: start, endTime: end, plan: '', tag: 'none', target: '' }]
+            blocks: [...blocks, { startTime: start, endTime: end, plan: '' }]
         });
     };
 
@@ -208,6 +234,12 @@ const DayPlanner = () => {
             ...editingRoutine,
             blocks: editingRoutine.blocks.filter((_, i) => i !== idx)
         });
+    };
+
+    const applyPreset = (blockIdx, preset) => {
+        const newBlocks = [...planner.blocks];
+        newBlocks[blockIdx].plan = preset.plan;
+        setPlanner({ ...planner, blocks: newBlocks });
     };
 
     const getDuration = (start, end) => {
@@ -491,26 +523,6 @@ const DayPlanner = () => {
                                                             placeholder="Plan..."
                                                             className="mini-plan-input"
                                                         />
-                                                        <select
-                                                            value={block.tag || 'none'}
-                                                            onChange={e => updateRoutineBlock(idx, 'tag', e.target.value)}
-                                                            className="mini-tag-select"
-                                                            style={{
-                                                                color: TAGS[block.tag || 'none']?.color,
-                                                                backgroundColor: TAGS[block.tag || 'none']?.bg
-                                                            }}
-                                                        >
-                                                            {Object.entries(TAGS).map(([val, { label }]) => (
-                                                                <option key={val} value={val}>{label}</option>
-                                                            ))}
-                                                        </select>
-                                                        <input
-                                                            type="text"
-                                                            value={block.target || ''}
-                                                            onChange={e => updateRoutineBlock(idx, 'target', e.target.value)}
-                                                            placeholder="Target (e.g. 300q)"
-                                                            className="mini-target-input"
-                                                        />
                                                         <button onClick={() => removeRoutineBlock(idx)} className="mini-delete-btn">
                                                             <Trash2 size={14} />
                                                         </button>
@@ -588,30 +600,17 @@ const DayPlanner = () => {
                                             onChange={(e) => updateBlockText(index, 'plan', e.target.value)}
                                             className="plan-input"
                                         />
-                                        <div className="tag-selector-container">
-                                            <select
-                                                value={block.tag || 'none'}
-                                                onChange={(e) => updateBlockText(index, 'tag', e.target.value)}
-                                                className="tag-select"
-                                                style={{
-                                                    color: TAGS[block.tag || 'none']?.color,
-                                                    backgroundColor: TAGS[block.tag || 'none']?.bg,
-                                                    borderColor: TAGS[block.tag || 'none']?.color + '40'
-                                                }}
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                {Object.entries(TAGS).map(([val, { label }]) => (
-                                                    <option key={val} value={val}>{label}</option>
-                                                ))}
-                                            </select>
-                                            <input
-                                                type="text"
-                                                placeholder="Target (e.g. 50 questions / 2h)"
-                                                value={block.target || ''}
-                                                onChange={(e) => updateBlockText(index, 'target', e.target.value)}
-                                                className="target-input"
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
+                                        <div className="quick-presets">
+                                            {PRESETS.map((p, pIdx) => (
+                                                <button
+                                                    key={pIdx}
+                                                    className="preset-btn"
+                                                    onClick={(e) => { e.stopPropagation(); applyPreset(index, p); }}
+                                                    title={`Assign ${p.label}`}
+                                                >
+                                                    {ICON_MAP[p.icon] || <Zap size={14} />}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
 
@@ -693,7 +692,25 @@ const DayPlanner = () => {
                                     {date && (
                                         <>
                                             <span className="day-number">{date.getDate()}</span>
-                                            {/* Indicators for data can be added here once we have a bulk "dots" endpoint */}
+                                            <div className="day-indicators">
+                                                {monthData.find(d => d.date === date.toISOString().split('T')[0])?.tags.slice(0, 3).map((tag, tIdx) => (
+                                                    <div
+                                                        key={tIdx}
+                                                        className="day-dot"
+                                                        style={{ backgroundColor: TAGS[tag]?.color }}
+                                                    />
+                                                ))}
+                                            </div>
+                                            {monthData.find(d => d.date === date.toISOString().split('T')[0])?.totalBlocks > 0 && (
+                                                <div className="day-progress-mini">
+                                                    <div
+                                                        className="day-progress-bar"
+                                                        style={{
+                                                            width: `${(monthData.find(d => d.date === date.toISOString().split('T')[0]).completedBlocks / monthData.find(d => d.date === date.toISOString().split('T')[0]).totalBlocks) * 100}%`
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
                                         </>
                                     )}
                                 </div>

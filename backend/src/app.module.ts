@@ -8,6 +8,8 @@ import { NoteModule } from './note/note.module';
 import { StatsModule } from './stats/stats.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { PlannerModule } from './planner/planner.module';
+import { HabitModule } from './habit/habit.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
     imports: [
@@ -20,6 +22,8 @@ import { PlannerModule } from './planner/planner.module';
         StatsModule,
         GatewayModule,
         PlannerModule,
+        HabitModule,
+        SeedModule,
     ],
 })
 export class AppModule { }

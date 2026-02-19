@@ -34,6 +34,8 @@ const DayPlanner = () => {
     const [isSavingRoutine, setIsSavingRoutine] = useState(false);
     const [editingRoutine, setEditingRoutine] = useState(null);
     const [newRoutineName, setNewRoutineName] = useState('');
+    const [viewMode, setViewMode] = useState('day'); // 'day' or 'month'
+    const [currentMonth, setCurrentMonth] = useState(new Date());
 
     const fetchPlanner = async (date) => {
         setLoading(true);
@@ -138,6 +140,7 @@ const DayPlanner = () => {
             }));
             setPlanner({ ...planner, blocks: newBlocks });
             setShowRoutines(false);
+            setSelectedBlockIndex(null);
         }
     };
 
@@ -238,7 +241,59 @@ const DayPlanner = () => {
     const changeDate = (days) => {
         const date = new Date(selectedDate);
         date.setDate(date.getDate() + days);
-        setSelectedDate(date.toISOString().split('T')[0]);
+        const dateStr = date.toISOString().split('T')[0];
+        setSelectedDate(dateStr);
+    };
+
+    const goToToday = () => {
+        const today = new Date().toISOString().split('T')[0];
+        setSelectedDate(today);
+        setCurrentMonth(new Date());
+    };
+
+    const generateMonthDays = () => {
+        const year = currentMonth.getFullYear();
+        const month = currentMonth.getMonth();
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        const days = [];
+        // Padding for previous month
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            days.push(null);
+        }
+        // Current month days
+        for (let d = 1; d <= daysInMonth; d++) {
+            days.push(new Date(year, month, d));
+        }
+        return days;
+    };
+
+    const changeMonth = (offset) => {
+        const newMonth = new Date(currentMonth);
+        newMonth.setMonth(newMonth.getMonth() + offset);
+        setCurrentMonth(newMonth);
+    };
+
+    const isToday = (date) => {
+        if (!date) return false;
+        const today = new Date();
+        return date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear();
+    };
+
+    const isSelected = (date) => {
+        if (!date) return false;
+        const dStr = date.toISOString().split('T')[0];
+        return dStr === selectedDate;
+    };
+
+    const handleDayClick = (date) => {
+        if (!date) return;
+        const dateStr = date.toISOString().split('T')[0];
+        setSelectedDate(dateStr);
+        setViewMode('day');
     };
 
     if (loading && !planner) return <div className="p-8">Loading your day...</div>;
@@ -250,14 +305,52 @@ const DayPlanner = () => {
         <div className="planner-container">
             <header className="planner-header">
                 <div className="header-left">
-                    <h1>Day Planner</h1>
-                    <div className="date-controls">
-                        <button onClick={() => changeDate(-1)} className="date-nav-btn"><ChevronLeft size={20} /></button>
-                        <div className="current-date">
-                            <Calendar size={18} />
-                            <span>{new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+                    <div className="title-row">
+                        <h1>Day Planner</h1>
+                        <div className="view-toggles">
+                            <button
+                                className={`view-toggle-btn ${viewMode === 'day' ? 'active' : ''}`}
+                                onClick={() => setViewMode('day')}
+                            >
+                                Day
+                            </button>
+                            <button
+                                className={`view-toggle-btn ${viewMode === 'month' ? 'active' : ''}`}
+                                onClick={() => setViewMode('month')}
+                            >
+                                Month
+                            </button>
                         </div>
-                        <button onClick={() => changeDate(1)} className="date-nav-btn"><ChevronRight size={20} /></button>
+                    </div>
+
+                    <div className="date-controls">
+                        <button
+                            className="today-btn"
+                            onClick={goToToday}
+                        >
+                            Today
+                        </button>
+                        <div className="date-nav-group">
+                            {viewMode === 'day' ? (
+                                <>
+                                    <button onClick={() => changeDate(-1)} className="date-nav-btn"><ChevronLeft size={20} /></button>
+                                    <div className="current-date">
+                                        <Calendar size={18} />
+                                        <span>{new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+                                    </div>
+                                    <button onClick={() => changeDate(1)} className="date-nav-btn"><ChevronRight size={20} /></button>
+                                </>
+                            ) : (
+                                <>
+                                    <button onClick={() => changeMonth(-1)} className="date-nav-btn"><ChevronLeft size={20} /></button>
+                                    <div className="current-date">
+                                        <Calendar size={18} />
+                                        <span>{currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+                                    </div>
+                                    <button onClick={() => changeMonth(1)} className="date-nav-btn"><ChevronRight size={20} /></button>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -438,149 +531,178 @@ const DayPlanner = () => {
                             </motion.div>
                         )}
                     </AnimatePresence>
-
-                    <div className="progress-status">
-                        <div className="progress-label">Your Promise: {progress}% Met</div>
-                        <div className="progress-bar-bg">
-                            <motion.div
-                                className="progress-bar-fill"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                            />
+                    {viewMode === 'day' && (
+                        <div className="progress-status">
+                            <div className="progress-label">Your Promise: {progress}% Met</div>
+                            <div className="progress-bar-bg">
+                                <motion.div
+                                    className="progress-bar-fill"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${progress}%` }}
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <button onClick={saveChanges} className="save-planner-btn">
-                        <Save size={18} />
-                        Save Changes
-                    </button>
+                    )}
+                    {viewMode === 'day' && (
+                        <button onClick={saveChanges} className="save-planner-btn">
+                            <Save size={18} />
+                            Save Changes
+                        </button>
+                    )}
                 </div>
             </header>
 
             <main className="planner-main">
-                <div className="time-blocks-grid">
-                    {planner.blocks?.map((block, index) => (
-                        <motion.div
-                            key={index}
-                            className={`time-block ${selectedBlockIndex === index ? 'active' : ''} ${block.completed ? 'completed' : ''}`}
-                            onClick={() => setSelectedBlockIndex(index)}
-                        >
-                            <div className="time-col">
-                                <input
-                                    type="time"
-                                    value={block.startTime}
-                                    onChange={(e) => updateBlockText(index, 'startTime', e.target.value)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="time-input"
-                                />
-                                <div className="duration-tag">{getDuration(block.startTime, block.endTime)}</div>
-                                <input
-                                    type="time"
-                                    value={block.endTime}
-                                    onChange={(e) => updateBlockText(index, 'endTime', e.target.value)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="time-input"
-                                />
-                            </div>
-
-                            <div className="plan-col">
-                                <input
-                                    type="text"
-                                    placeholder="What's the plan?"
-                                    value={block.plan}
-                                    onChange={(e) => updateBlockText(index, 'plan', e.target.value)}
-                                    className="plan-input"
-                                />
-                                <div className="tag-selector-container">
-                                    <select
-                                        value={block.tag || 'none'}
-                                        onChange={(e) => updateBlockText(index, 'tag', e.target.value)}
-                                        className="tag-select"
-                                        style={{
-                                            color: TAGS[block.tag || 'none']?.color,
-                                            backgroundColor: TAGS[block.tag || 'none']?.bg,
-                                            borderColor: TAGS[block.tag || 'none']?.color + '40'
-                                        }}
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        {Object.entries(TAGS).map(([val, { label }]) => (
-                                            <option key={val} value={val}>{label}</option>
-                                        ))}
-                                    </select>
-                                    <input
-                                        type="text"
-                                        placeholder="Target (e.g. 50 questions / 2h)"
-                                        value={block.target || ''}
-                                        onChange={(e) => updateBlockText(index, 'target', e.target.value)}
-                                        className="target-input"
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="block-actions">
-                                <button
-                                    className={`status-toggle ${block.completed ? 'is-done' : ''}`}
-                                    onClick={(e) => { e.stopPropagation(); toggleBlockStatus(index); }}
-                                    title={block.completed ? "Mark as incomplete" : "Mark as completed"}
+                {viewMode === 'day' ? (
+                    <>
+                        <div className="time-blocks-grid">
+                            {planner.blocks?.map((block, index) => (
+                                <motion.div
+                                    key={index}
+                                    className={`time-block ${selectedBlockIndex === index ? 'active' : ''} ${block.completed ? 'completed' : ''}`}
+                                    onClick={() => setSelectedBlockIndex(index)}
                                 >
-                                    {block.completed ? <CheckCircle2 size={22} /> : <Circle size={22} />}
-                                </button>
-                                <button
-                                    className="delete-block-btn"
-                                    onClick={(e) => { e.stopPropagation(); removeBlock(index); }}
-                                    title="Delete block"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
-                        </motion.div>
-                    ))}
+                                    <div className="time-col">
+                                        <input
+                                            type="time"
+                                            value={block.startTime}
+                                            onChange={(e) => updateBlockText(index, 'startTime', e.target.value)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="time-input"
+                                        />
+                                        <div className="duration-tag">{getDuration(block.startTime, block.endTime)}</div>
+                                        <input
+                                            type="time"
+                                            value={block.endTime}
+                                            onChange={(e) => updateBlockText(index, 'endTime', e.target.value)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="time-input"
+                                        />
+                                    </div>
 
-                    <motion.button
-                        className="add-block-btn"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={addBlock}
-                    >
-                        <Plus size={20} />
-                        Add Time Block
-                    </motion.button>
-                </div>
+                                    <div className="plan-col">
+                                        <input
+                                            type="text"
+                                            placeholder="What's the plan?"
+                                            value={block.plan}
+                                            onChange={(e) => updateBlockText(index, 'plan', e.target.value)}
+                                            className="plan-input"
+                                        />
+                                        <div className="tag-selector-container">
+                                            <select
+                                                value={block.tag || 'none'}
+                                                onChange={(e) => updateBlockText(index, 'tag', e.target.value)}
+                                                className="tag-select"
+                                                style={{
+                                                    color: TAGS[block.tag || 'none']?.color,
+                                                    backgroundColor: TAGS[block.tag || 'none']?.bg,
+                                                    borderColor: TAGS[block.tag || 'none']?.color + '40'
+                                                }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                {Object.entries(TAGS).map(([val, { label }]) => (
+                                                    <option key={val} value={val}>{label}</option>
+                                                ))}
+                                            </select>
+                                            <input
+                                                type="text"
+                                                placeholder="Target (e.g. 50 questions / 2h)"
+                                                value={block.target || ''}
+                                                onChange={(e) => updateBlockText(index, 'target', e.target.value)}
+                                                className="target-input"
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        </div>
+                                    </div>
 
-                <aside className="reality-sidebar">
-                    <AnimatePresence mode="wait">
-                        {selectedBlockIndex !== null ? (
-                            <motion.div
-                                key={selectedBlockIndex}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="sidebar-content"
+                                    <div className="block-actions">
+                                        <button
+                                            className={`status-toggle ${block.completed ? 'is-done' : ''}`}
+                                            onClick={(e) => { e.stopPropagation(); toggleBlockStatus(index); }}
+                                            title={block.completed ? "Mark as incomplete" : "Mark as completed"}
+                                        >
+                                            {block.completed ? <CheckCircle2 size={22} /> : <Circle size={22} />}
+                                        </button>
+                                        <button
+                                            className="delete-block-btn"
+                                            onClick={(e) => { e.stopPropagation(); removeBlock(index); }}
+                                            title="Delete block"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            ))}
+
+                            <motion.button
+                                className="add-block-btn"
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={addBlock}
                             >
-                                <div className="selected-block-info">
-                                    <Clock size={16} />
-                                    <span>{planner.blocks[selectedBlockIndex].startTime} - {planner.blocks[selectedBlockIndex].endTime}</span>
+                                <Plus size={20} />
+                                Add Time Block
+                            </motion.button>
+                        </div>
+
+                        <aside className="reality-sidebar">
+                            <AnimatePresence mode="wait">
+                                {selectedBlockIndex !== null ? (
+                                    <motion.div
+                                        key={selectedBlockIndex}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        className="sidebar-content"
+                                    >
+                                        <div className="selected-block-info">
+                                            <Clock size={16} />
+                                            <span>{planner.blocks[selectedBlockIndex].startTime} - {planner.blocks[selectedBlockIndex].endTime}</span>
+                                        </div>
+                                        <div className="reality-section">
+                                            <textarea
+                                                placeholder="What happened during this hour? Record achievements, notes, or thoughts..."
+                                                value={planner.blocks[selectedBlockIndex].reality}
+                                                onChange={(e) => updateBlockText(selectedBlockIndex, 'reality', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="sync-tip">
+                                            Changes are saved when you click "Save Changes" above.
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <div className="sidebar-empty">
+                                        <p>Select a time block to record what you actually did during that period.</p>
+                                    </div>
+                                )}
+                            </AnimatePresence>
+                        </aside>
+                    </>
+                ) : (
+                    <div className="month-view-container">
+                        <div className="calendar-grid">
+                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                <div key={day} className="calendar-weekday">{day}</div>
+                            ))}
+                            {generateMonthDays().map((date, idx) => (
+                                <div
+                                    key={idx}
+                                    className={`calendar-day ${!date ? 'empty' : ''} ${isToday(date) ? 'today' : ''} ${isSelected(date) ? 'selected' : ''}`}
+                                    onClick={() => handleDayClick(date)}
+                                >
+                                    {date && (
+                                        <>
+                                            <span className="day-number">{date.getDate()}</span>
+                                            {/* Indicators for data can be added here once we have a bulk "dots" endpoint */}
+                                        </>
+                                    )}
                                 </div>
-                                <div className="reality-section">
-                                    <textarea
-                                        placeholder="What happened during this hour? Record achievements, notes, or thoughts..."
-                                        value={planner.blocks[selectedBlockIndex].reality}
-                                        onChange={(e) => updateBlockText(selectedBlockIndex, 'reality', e.target.value)}
-                                    />
-                                </div>
-                                <div className="sync-tip">
-                                    Changes are saved when you click "Save Changes" above.
-                                </div>
-                            </motion.div>
-                        ) : (
-                            <div className="sidebar-empty">
-                                <p>Select a time block to record what you actually did during that period.</p>
-                            </div>
-                        )}
-                    </AnimatePresence>
-                </aside>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </main>
-        </div>
+        </div >
     );
 };
 

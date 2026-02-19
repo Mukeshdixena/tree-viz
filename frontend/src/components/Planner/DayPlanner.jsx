@@ -111,6 +111,7 @@ const DayPlanner = () => {
             endTime: nextEnd,
             plan: '',
             tag: 'none',
+            target: '',
             reality: '',
             completed: false
         }];
@@ -146,7 +147,7 @@ const DayPlanner = () => {
             const routineData = {
                 name: newRoutineName,
                 icon: 'Sun',
-                blocks: planner.blocks.map(({ startTime, endTime, plan, tag }) => ({ startTime, endTime, plan, tag }))
+                blocks: planner.blocks.map(({ startTime, endTime, plan, tag, target }) => ({ startTime, endTime, plan, tag, target }))
             };
             await api.post('/routines', routineData);
             setNewRoutineName('');
@@ -189,7 +190,7 @@ const DayPlanner = () => {
         }
         setEditingRoutine({
             ...editingRoutine,
-            blocks: [...blocks, { startTime: start, endTime: end, plan: '', tag: 'none' }]
+            blocks: [...blocks, { startTime: start, endTime: end, plan: '', tag: 'none', target: '' }]
         });
     };
 
@@ -410,6 +411,13 @@ const DayPlanner = () => {
                                                                 <option key={val} value={val}>{label}</option>
                                                             ))}
                                                         </select>
+                                                        <input
+                                                            type="text"
+                                                            value={block.target || ''}
+                                                            onChange={e => updateRoutineBlock(idx, 'target', e.target.value)}
+                                                            placeholder="Target (e.g. 300q)"
+                                                            className="mini-target-input"
+                                                        />
                                                         <button onClick={() => removeRoutineBlock(idx)} className="mini-delete-btn">
                                                             <Trash2 size={14} />
                                                         </button>
@@ -498,6 +506,14 @@ const DayPlanner = () => {
                                             <option key={val} value={val}>{label}</option>
                                         ))}
                                     </select>
+                                    <input
+                                        type="text"
+                                        placeholder="Target (e.g. 50 questions / 2h)"
+                                        value={block.target || ''}
+                                        onChange={(e) => updateBlockText(index, 'target', e.target.value)}
+                                        className="target-input"
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
                                 </div>
                             </div>
 

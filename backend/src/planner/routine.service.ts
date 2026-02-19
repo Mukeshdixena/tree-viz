@@ -42,24 +42,24 @@ export class RoutineService {
                     name: 'Weekday',
                     icon: 'Sun',
                     blocks: [
-                        { startTime: "07:00", endTime: "08:00", plan: "Morning Routine" },
-                        { startTime: "08:00", endTime: "09:00", plan: "Deep Work / Focus" },
-                        { startTime: "09:00", endTime: "13:00", plan: "Primary Work Block" },
-                        { startTime: "13:00", endTime: "14:00", plan: "Lunch Break" },
-                        { startTime: "14:00", endTime: "17:00", plan: "Secondary Work Block" },
-                        { startTime: "17:00", endTime: "18:00", plan: "Exercise / Wind down" },
-                        { startTime: "18:00", endTime: "22:00", plan: "Family / Personal Time" },
+                        { startTime: "07:00", endTime: "08:00", plan: "Morning Routine", tag: 'rest', target: '1h' },
+                        { startTime: "08:00", endTime: "09:00", plan: "DSA Practice", tag: 'dsa', target: '5 problems' },
+                        { startTime: "09:00", endTime: "13:00", plan: "Primary Work Block", tag: 'work', target: '4h focus' },
+                        { startTime: "13:00", endTime: "14:00", plan: "Lunch Break", tag: 'rest', target: '1h' },
+                        { startTime: "14:00", endTime: "17:00", plan: "Secondary Work Block", tag: 'work', target: 'Deep work' },
+                        { startTime: "17:00", endTime: "18:00", plan: "Exercise / Fitness", tag: 'fitness', target: 'Gym / Run' },
+                        { startTime: "18:00", endTime: "22:00", plan: "English Learning", tag: 'english', target: '1 lesson' },
                     ]
                 },
                 {
                     name: 'Weekend',
                     icon: 'Moon',
                     blocks: [
-                        { startTime: "09:00", endTime: "10:00", plan: "Slow Morning" },
-                        { startTime: "10:00", endTime: "13:00", plan: "Hobbies / Errands" },
-                        { startTime: "13:00", endTime: "15:00", plan: "Family Lunch" },
-                        { startTime: "15:00", endTime: "18:00", plan: "Relaxation / Outing" },
-                        { startTime: "18:00", endTime: "22:00", plan: "Evening Leisure" },
+                        { startTime: "09:00", endTime: "10:00", plan: "Meditation & Coffee", tag: 'meditation', target: '20 min' },
+                        { startTime: "10:00", endTime: "13:00", plan: "Hobbies / Errands", tag: 'none', target: '' },
+                        { startTime: "13:00", endTime: "15:00", plan: "Family Lunch", tag: 'family', target: 'Quality time' },
+                        { startTime: "15:00", endTime: "18:00", plan: "Relaxation / Outing", tag: 'rest', target: 'Beach / Park' },
+                        { startTime: "18:00", endTime: "22:00", plan: "Evening Leisure", tag: 'rest', target: 'Movie / Book' },
                     ]
                 }
             ];

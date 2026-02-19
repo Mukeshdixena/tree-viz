@@ -536,6 +536,7 @@
 .tag-selector-container {
     display: flex;
     align-items: center;
+    gap: 0.75rem;
 }
 
 .tag-select {
@@ -549,6 +550,39 @@
     transition: all 0.2s;
     text-transform: uppercase;
     letter-spacing: 0.02em;
+}
+
+.target-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--border-color);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 2px 0;
+    width: 180px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.target-input:focus {
+    border-bottom-color: var(--primary);
+    color: var(--text-primary);
+}
+
+.target-input::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.75rem;
+}
+
+.mini-target-input {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    width: 80px;
 }
 
 .tag-select:hover {

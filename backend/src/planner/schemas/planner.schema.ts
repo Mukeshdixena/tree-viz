@@ -16,6 +16,9 @@ class TimeBlock {
     reality: string;
 
     @Prop({ default: '' })
+    target: string; // e.g. "300 questions" or "30h"
+
+    @Prop({ default: '' })
     tag: string;
 
     @Prop({ default: false })

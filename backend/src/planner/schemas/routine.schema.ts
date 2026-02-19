@@ -14,6 +14,9 @@ class RoutineBlock {
 
     @Prop({ default: '' })
     tag: string;
+
+    @Prop({ default: '' })
+    target: string;
 }
 
 @Schema({ timestamps: true })

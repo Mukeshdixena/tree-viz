@@ -17,6 +17,12 @@ export class Task extends Document {
 
     @Prop()
     dueDate: string;
+
+    @Prop({ default: 'none' })
+    targetType: string; // 'none', 'time', 'count'
+
+    @Prop({ default: '' })
+    targetValue: string;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

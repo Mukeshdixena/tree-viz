@@ -252,18 +252,11 @@
     border-radius: 6px;
     border: 1.5px solid var(--habit-color);
     background: transparent;
-    cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-}
-
-.habit-toggle-dot:hover {
-    transform: scale(1.1);
-    background: var(--habit-color);
-    opacity: 0.2;
 }
 
 .habit-toggle-dot.done {

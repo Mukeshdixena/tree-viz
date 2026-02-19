@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, CheckCircle2, Circle, Clock, ChevronLeft, ChevronRight, Save, Layout, Trash2, Plus, Zap, Coffee, Sunrise, Sun, Moon, Edit3, PlusCircle } from 'lucide-react';
+import { Calendar, CheckCircle2, Circle, Clock, ChevronLeft, ChevronRight, Save, Layout, Trash2, Plus, Zap, Coffee, Sunrise, Sun, Moon, Edit3, PlusCircle, Flame } from 'lucide-react';
 import { api } from '../../api';
 import { subscribeToUpdates, unsubscribeFromUpdates } from '../../socket';
 import './DayPlanner.css';
@@ -49,6 +49,7 @@ const DayPlanner = () => {
     const [viewMode, setViewMode] = useState('day'); // 'day' or 'month'
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [monthData, setMonthData] = useState([]);
+    const [habits, setHabits] = useState([]);
 
     const fetchPlanner = async (date) => {
         setLoading(true);
@@ -84,6 +85,15 @@ const DayPlanner = () => {
         }
     };
 
+    const fetchHabits = async () => {
+        try {
+            const data = await api.get('/habits');
+            if (data) setHabits(data);
+        } catch (error) {
+            console.error("Error fetching habits:", error);
+        }
+    };
+
     const fetchMonthData = async (monthDate) => {
         try {
             const year = monthDate.getFullYear();
@@ -99,11 +109,13 @@ const DayPlanner = () => {
         fetchPlanner(selectedDate);
         fetchRoutines();
         fetchTasks();
+        fetchHabits();
 
         subscribeToUpdates((update) => {
-            if (update.type === 'task' || update.type === 'planner') {
+            if (update.type === 'task' || update.type === 'planner' || update.type === 'habit') {
                 if (update.type === 'task') fetchTasks();
                 if (update.type === 'planner' && update.date === selectedDate) fetchPlanner(selectedDate);
+                if (update.type === 'habit') fetchHabits();
             }
         });
 
@@ -126,6 +138,15 @@ const DayPlanner = () => {
             }
         } catch (error) {
             console.error("Error updating planner:", error);
+        }
+    };
+
+    const toggleHabit = async (habitId) => {
+        try {
+            await api.post(`/habits/${habitId}/toggle`, { date: selectedDate });
+            fetchHabits();
+        } catch (error) {
+            console.error("Error toggling habit:", error);
         }
     };
 
@@ -587,199 +608,229 @@ const DayPlanner = () => {
                 </div>
             </header>
 
-            <main className="planner-main">
-                {viewMode === 'day' ? (
-                    <>
-                        <div className="time-blocks-grid">
-                            {planner.blocks?.map((block, index) => (
-                                <motion.div
-                                    key={index}
-                                    className={`time-block ${selectedBlockIndex === index ? 'active' : ''} ${block.completed ? 'completed' : ''}`}
-                                    onClick={() => setSelectedBlockIndex(index)}
-                                >
-                                    <div className="time-col">
-                                        <input
-                                            type="time"
-                                            value={block.startTime}
-                                            onChange={(e) => updateBlockText(index, 'startTime', e.target.value)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="time-input"
-                                        />
-                                        <div className="duration-tag">{getDuration(block.startTime, block.endTime)}</div>
-                                        <input
-                                            type="time"
-                                            value={block.endTime}
-                                            onChange={(e) => updateBlockText(index, 'endTime', e.target.value)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="time-input"
-                                        />
-                                    </div>
-
-                                    <div className="plan-col">
-                                        <input
-                                            type="text"
-                                            placeholder="What's the plan?"
-                                            value={block.plan}
-                                            onChange={(e) => updateBlockText(index, 'plan', e.target.value)}
-                                            className="plan-input"
-                                        />
-                                        <div className="quick-presets">
-                                            {PRESETS.map((p, pIdx) => (
-                                                <button
-                                                    key={pIdx}
-                                                    className="preset-btn"
-                                                    onClick={(e) => { e.stopPropagation(); applyPreset(index, p); }}
-                                                    title={`Assign ${p.label}`}
-                                                >
-                                                    {ICON_MAP[p.icon] || <Zap size={14} />}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="block-actions">
-                                        <button
-                                            className={`status-toggle ${block.completed ? 'is-done' : ''}`}
-                                            onClick={(e) => { e.stopPropagation(); toggleBlockStatus(index); }}
-                                            title={block.completed ? "Mark as incomplete" : "Mark as completed"}
-                                        >
-                                            {block.completed ? <CheckCircle2 size={22} /> : <Circle size={22} />}
-                                        </button>
-                                        <button
-                                            className="delete-block-btn"
-                                            onClick={(e) => { e.stopPropagation(); removeBlock(index); }}
-                                            title="Delete block"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            ))}
-
-                            <motion.button
-                                className="add-block-btn"
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={addBlock}
-                            >
-                                <Plus size={20} />
-                                Add Time Block
-                            </motion.button>
+            <main className="planner-main-container">
+                {viewMode === 'day' && (
+                    <div className="habits-overview">
+                        <div className="habits-label">
+                            <Flame size={18} />
+                            <span>Today's Habits</span>
                         </div>
-
-                        <aside className="reality-sidebar">
-                            <AnimatePresence mode="wait">
-                                {selectedBlockIndex !== null ? (
-                                    <motion.div
-                                        key={selectedBlockIndex}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
-                                        className="sidebar-content"
+                        <div className="habits-chips-list">
+                            {habits.map(habit => {
+                                const isDone = habit.logs[selectedDate];
+                                return (
+                                    <button
+                                        key={habit._id}
+                                        className={`habit-chip ${isDone ? 'done' : ''}`}
+                                        style={{ '--habit-color': habit.color, '--habit-bg': habit.color + '20' }}
+                                        onClick={() => toggleHabit(habit._id)}
                                     >
-                                        <div className="selected-block-info">
-                                            <Clock size={16} />
-                                            <span>{planner.blocks[selectedBlockIndex].startTime} - {planner.blocks[selectedBlockIndex].endTime}</span>
+                                        <div className="habit-icon-mini">
+                                            <Zap size={14} />
                                         </div>
-                                        <div className="reality-section">
-                                            <div className="task-link-group">
-                                                <label>Link to Task</label>
-                                                <select
-                                                    value={planner.blocks[selectedBlockIndex].taskId || ''}
-                                                    onChange={(e) => updateBlockText(selectedBlockIndex, 'taskId', e.target.value)}
-                                                    className="sidebar-select"
-                                                >
-                                                    <option value="">No linked task</option>
-                                                    {tasks.filter(t => t.status !== 'done').map(t => (
-                                                        <option key={t._id} value={t._id}>{t.title}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-
-                                            {planner.blocks[selectedBlockIndex].taskId && (
-                                                <div className="progress-input-group">
-                                                    <div className="label-row">
-                                                        <label>Progress Made</label>
-                                                        {tasks.find(t => t._id === planner.blocks[selectedBlockIndex].taskId) && (
-                                                            <span className="task-overall-mini">
-                                                                Overall: {tasks.find(t => t._id === planner.blocks[selectedBlockIndex].taskId).targetCurrent} / {tasks.find(t => t._id === planner.blocks[selectedBlockIndex].taskId).targetTotal}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="progress-input-wrapper">
-                                                        <input
-                                                            type="number"
-                                                            placeholder="Amount done..."
-                                                            value={planner.blocks[selectedBlockIndex].progressMade || ''}
-                                                            onChange={(e) => updateBlockText(selectedBlockIndex, 'progressMade', parseInt(e.target.value) || 0)}
-                                                        />
-                                                        <span>{tasks.find(t => t._id === planner.blocks[selectedBlockIndex].taskId)?.targetValue || 'units'}</span>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <label>Notes / Reality</label>
-                                            <textarea
-                                                placeholder="What happened during this hour? Record achievements, notes, or thoughts..."
-                                                value={planner.blocks[selectedBlockIndex].reality}
-                                                onChange={(e) => updateBlockText(selectedBlockIndex, 'reality', e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="sync-tip">
-                                            Changes are saved when you click "Save Changes" above.
-                                        </div>
-                                    </motion.div>
-                                ) : (
-                                    <div className="sidebar-empty">
-                                        <p>Select a time block to record what you actually did during that period.</p>
-                                    </div>
-                                )}
-                            </AnimatePresence>
-                        </aside>
-                    </>
-                ) : (
-                    <div className="month-view-container">
-                        <div className="calendar-grid">
-                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                <div key={day} className="calendar-weekday">{day}</div>
-                            ))}
-                            {generateMonthDays().map((date, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`calendar-day ${!date ? 'empty' : ''} ${isToday(date) ? 'today' : ''} ${isSelected(date) ? 'selected' : ''}`}
-                                    onClick={() => handleDayClick(date)}
-                                >
-                                    {date && (
-                                        <>
-                                            <span className="day-number">{date.getDate()}</span>
-                                            <div className="day-indicators">
-                                                {monthData.find(d => d.date === date.toISOString().split('T')[0])?.tags.slice(0, 3).map((tag, tIdx) => (
-                                                    <div
-                                                        key={tIdx}
-                                                        className="day-dot"
-                                                        style={{ backgroundColor: TAGS[tag]?.color }}
-                                                    />
-                                                ))}
-                                            </div>
-                                            {monthData.find(d => d.date === date.toISOString().split('T')[0])?.totalBlocks > 0 && (
-                                                <div className="day-progress-mini">
-                                                    <div
-                                                        className="day-progress-bar"
-                                                        style={{
-                                                            width: `${(monthData.find(d => d.date === date.toISOString().split('T')[0]).completedBlocks / monthData.find(d => d.date === date.toISOString().split('T')[0]).totalBlocks) * 100}%`
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-                            ))}
+                                        <span className="habit-name-mini">{habit.name}</span>
+                                        {isDone ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+                                    </button>
+                                );
+                            })}
+                            {habits.length === 0 && <span className="no-habits-text">No habits tracked yet. Add some in the Habit Tracker!</span>}
                         </div>
                     </div>
                 )}
+                <div className="planner-main">
+                    {viewMode === 'day' ? (
+                        <>
+                            <div className="time-blocks-grid">
+                                {planner.blocks?.map((block, index) => (
+                                    <motion.div
+                                        key={index}
+                                        className={`time-block ${selectedBlockIndex === index ? 'active' : ''} ${block.completed ? 'completed' : ''}`}
+                                        onClick={() => setSelectedBlockIndex(index)}
+                                    >
+                                        <div className="time-col">
+                                            <input
+                                                type="time"
+                                                value={block.startTime}
+                                                onChange={(e) => updateBlockText(index, 'startTime', e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="time-input"
+                                            />
+                                            <div className="duration-tag">{getDuration(block.startTime, block.endTime)}</div>
+                                            <input
+                                                type="time"
+                                                value={block.endTime}
+                                                onChange={(e) => updateBlockText(index, 'endTime', e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="time-input"
+                                            />
+                                        </div>
+
+                                        <div className="plan-col">
+                                            <input
+                                                type="text"
+                                                placeholder="What's the plan?"
+                                                value={block.plan}
+                                                onChange={(e) => updateBlockText(index, 'plan', e.target.value)}
+                                                className="plan-input"
+                                            />
+                                            <div className="quick-presets">
+                                                {PRESETS.map((p, pIdx) => (
+                                                    <button
+                                                        key={pIdx}
+                                                        className="preset-btn"
+                                                        onClick={(e) => { e.stopPropagation(); applyPreset(index, p); }}
+                                                        title={`Assign ${p.label}`}
+                                                    >
+                                                        {ICON_MAP[p.icon] || <Zap size={14} />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="block-actions">
+                                            <button
+                                                className={`status-toggle ${block.completed ? 'is-done' : ''}`}
+                                                onClick={(e) => { e.stopPropagation(); toggleBlockStatus(index); }}
+                                                title={block.completed ? "Mark as incomplete" : "Mark as completed"}
+                                            >
+                                                {block.completed ? <CheckCircle2 size={22} /> : <Circle size={22} />}
+                                            </button>
+                                            <button
+                                                className="delete-block-btn"
+                                                onClick={(e) => { e.stopPropagation(); removeBlock(index); }}
+                                                title="Delete block"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ))}
+
+                                <motion.button
+                                    className="add-block-btn"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={addBlock}
+                                >
+                                    <Plus size={20} />
+                                    Add Time Block
+                                </motion.button>
+                            </div>
+
+                            <aside className="reality-sidebar">
+                                <AnimatePresence mode="wait">
+                                    {selectedBlockIndex !== null ? (
+                                        <motion.div
+                                            key={selectedBlockIndex}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            className="sidebar-content"
+                                        >
+                                            <div className="selected-block-info">
+                                                <Clock size={16} />
+                                                <span>{planner.blocks[selectedBlockIndex].startTime} - {planner.blocks[selectedBlockIndex].endTime}</span>
+                                            </div>
+                                            <div className="reality-section">
+                                                <div className="task-link-group">
+                                                    <label>Link to Task</label>
+                                                    <select
+                                                        value={planner.blocks[selectedBlockIndex].taskId || ''}
+                                                        onChange={(e) => updateBlockText(selectedBlockIndex, 'taskId', e.target.value)}
+                                                        className="sidebar-select"
+                                                    >
+                                                        <option value="">No linked task</option>
+                                                        {tasks.filter(t => t.status !== 'done').map(t => (
+                                                            <option key={t._id} value={t._id}>{t.title}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+
+                                                {planner.blocks[selectedBlockIndex].taskId && (
+                                                    <div className="progress-input-group">
+                                                        <div className="label-row">
+                                                            <label>Progress Made</label>
+                                                            {tasks.find(t => t._id === planner.blocks[selectedBlockIndex].taskId) && (
+                                                                <span className="task-overall-mini">
+                                                                    Overall: {tasks.find(t => t._id === planner.blocks[selectedBlockIndex].taskId).targetCurrent} / {tasks.find(t => t._id === planner.blocks[selectedBlockIndex].taskId).targetTotal}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="progress-input-wrapper">
+                                                            <input
+                                                                type="number"
+                                                                placeholder="Amount done..."
+                                                                value={planner.blocks[selectedBlockIndex].progressMade || ''}
+                                                                onChange={(e) => updateBlockText(selectedBlockIndex, 'progressMade', parseInt(e.target.value) || 0)}
+                                                            />
+                                                            <span>{tasks.find(t => t._id === planner.blocks[selectedBlockIndex].taskId)?.targetValue || 'units'}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <label>Notes / Reality</label>
+                                                <textarea
+                                                    placeholder="What happened during this hour? Record achievements, notes, or thoughts..."
+                                                    value={planner.blocks[selectedBlockIndex].reality}
+                                                    onChange={(e) => updateBlockText(selectedBlockIndex, 'reality', e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="sync-tip">
+                                                Changes are saved when you click "Save Changes" above.
+                                            </div>
+                                        </motion.div>
+                                    ) : (
+                                        <div className="sidebar-empty">
+                                            <p>Select a time block to record what you actually did during that period.</p>
+                                        </div>
+                                    )}
+                                </AnimatePresence>
+                            </aside>
+                        </>
+                    ) : (
+                        <div className="month-view-container">
+                            <div className="calendar-grid">
+                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                    <div key={day} className="calendar-weekday">{day}</div>
+                                ))}
+                                {generateMonthDays().map((date, idx) => (
+                                    <div
+                                        key={idx}
+                                        className={`calendar-day ${!date ? 'empty' : ''} ${isToday(date) ? 'today' : ''} ${isSelected(date) ? 'selected' : ''}`}
+                                        onClick={() => handleDayClick(date)}
+                                    >
+                                        {date && (
+                                            <>
+                                                <span className="day-number">{date.getDate()}</span>
+                                                <div className="day-indicators">
+                                                    {monthData.find(d => d.date === date.toISOString().split('T')[0])?.tags.slice(0, 3).map((tag, tIdx) => (
+                                                        <div
+                                                            key={tIdx}
+                                                            className="day-dot"
+                                                            style={{ backgroundColor: TAGS[tag]?.color }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                                {monthData.find(d => d.date === date.toISOString().split('T')[0])?.totalBlocks > 0 && (
+                                                    <div className="day-progress-mini">
+                                                        <div
+                                                            className="day-progress-bar"
+                                                            style={{
+                                                                width: `${(monthData.find(d => d.date === date.toISOString().split('T')[0]).completedBlocks / monthData.find(d => d.date === date.toISOString().split('T')[0]).totalBlocks) * 100}%`
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </main>
-        </div >
+        </div>
     );
 };
 

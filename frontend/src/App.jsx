@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import Login from './components/Login';
 import GlobalSidebar from './components/Navigation/GlobalSidebar';
-import GoalTracker from './components/Goals/GoalTracker';
+import RoadmapTracker from './components/Goals/RoadmapTracker';
 import TaskBoard from './components/Tasks/TaskBoard';
 import JournalEntry from './components/Journal/JournalEntry';
 import NotesManager from './components/Notes/NotesManager';
@@ -15,7 +15,7 @@ import './App.css';
 const MainLayout = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState('goals');
+  const [activeTab, setActiveTab] = useState('roadmap');
 
   // Sync activeTab with URL
   useEffect(() => {
@@ -46,8 +46,8 @@ const MainLayout = ({ isDark, toggleTheme }) => {
       />
       <div className="content-area">
         <Routes>
-          <Route path="/" element={<Navigate to="/goals" replace />} />
-          <Route path="/goals" element={<GoalTracker />} />
+          <Route path="/" element={<Navigate to="/roadmap" replace />} />
+          <Route path="/roadmap" element={<RoadmapTracker />} />
           <Route path="/tasks" element={<TaskBoard />} />
           <Route path="/journal" element={<JournalEntry />} />
           <Route path="/planner" element={<DayPlanner />} />

@@ -70,7 +70,7 @@ export default function Sidebar({ data, isOpen, activeTreeIndex, toggleSidebar, 
             <div className="sidebar-header">
                 <div className="sidebar-title">
                     <ListTree size={20} className="sidebar-title-icon" />
-                    <span>Tree Explorer</span>
+                    <span>Roadmap Explorer</span>
                 </div>
             </div>
             <div className="sidebar-content">
@@ -92,7 +92,7 @@ export default function Sidebar({ data, isOpen, activeTreeIndex, toggleSidebar, 
 
             <div className="sidebar-footer">
                 <button className="add-tree-btn" onClick={onAddTree}>
-                    <Check size={16} /> New Tree
+                    <Check size={16} /> New Roadmap
                 </button>
             </div>
 

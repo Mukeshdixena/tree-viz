@@ -115,8 +115,8 @@ const LearningDashboard = () => {
             <div className="stats-grid">
                 <StatCard icon={Clock} title="Hours Invested" value={`${stats.totalHours}h`} color="#6366f1" delay={0.1} />
                 <StatCard icon={Zap} title="Day Streak" value={stats.streak} color="#f59e0b" delay={0.2} />
-                <StatCard icon={Trophy} title="Goals Crushed" value={stats.completedGoals} color="#10b981" delay={0.3} />
-                <StatCard icon={Target} title="Active Targets" value={stats.activeGoals} color="#ec4899" delay={0.4} />
+                <StatCard icon={Trophy} title="Roadmaps Completed" value={stats.completedGoals} color="#10b981" delay={0.3} />
+                <StatCard icon={Target} title="Active Roadmaps" value={stats.activeGoals} color="#ec4899" delay={0.4} />
             </div>
 
             <div className="charts-section">

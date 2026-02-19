@@ -12,7 +12,7 @@ import '../../App.css'; // Maintaining original styles for now
 
 import { api } from '../../api';
 
-function GoalTracker() {
+function RoadmapTracker() {
     const [data, setData] = useState([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -350,8 +350,8 @@ function GoalTracker() {
                         </Viewport>
                     ) : (
                         <div className="no-data">
-                            <h3>No Trees Found</h3>
-                            <p>Add a tree in the editor or use the "New Tree" button to get started.</p>
+                            <h3>No Roadmaps Found</h3>
+                            <p>Add a roadmap in the editor or use the "New Roadmap" button to get started.</p>
                         </div>
                     )}
                 </div>
@@ -385,4 +385,4 @@ function GoalTracker() {
     );
 }
 
-export default GoalTracker;
+export default RoadmapTracker;

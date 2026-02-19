@@ -999,3 +999,118 @@ body.dark-mode .time-block.completed {
 
 /* Add dot for days with plans - would need data indicators */
 /* .has-plans::after { background: var(--primary); } */
+
+/* Habits Overview */
+.planner-main-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow: hidden;
+    padding: 2rem;
+}
+
+.habits-overview {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.habits-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    min-width: 140px;
+}
+
+.habits-chips-list {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.habit-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 100px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.habit-chip:hover {
+    transform: translateY(-1px);
+    border-color: var(--habit-color);
+    background: var(--habit-bg);
+    color: var(--habit-color);
+}
+
+.habit-chip.done {
+    background: var(--habit-bg);
+    border-color: var(--habit-color);
+    color: var(--habit-color);
+    box-shadow: 0 2px 8px var(--habit-bg);
+}
+
+.habit-chip svg {
+    flex-shrink: 0;
+}
+
+.habit-icon-mini {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--bg-primary);
+    color: var(--habit-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.no-habits-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Update planner-main to fill remaining space */
+.planner-main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+/* Move padding from container to main-container */
+.planner-container {
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-primary);
+    overflow: hidden;
+}
+
+.planner-header {
+    padding: 2rem 2rem 1.5rem;
+    margin-bottom: 0;
+}

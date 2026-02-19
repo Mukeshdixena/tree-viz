@@ -140,15 +140,14 @@ const HabitTracker = () => {
                                     <span className="day-number">{date.getDate()}</span>
                                     <div className="day-habits">
                                         {habits.map(habit => (
-                                            <button
+                                            <div
                                                 key={habit._id}
                                                 className={`habit-toggle-dot ${habit.logs[dStr] ? 'done' : ''}`}
                                                 style={{ '--habit-color': habit.color }}
-                                                onClick={() => toggleHabit(habit._id, dStr)}
                                                 title={`${habit.name}: ${habit.logs[dStr] ? 'Done' : 'Pending'}`}
                                             >
                                                 {habit.logs[dStr] && <CheckCircle2 size={10} />}
-                                            </button>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>

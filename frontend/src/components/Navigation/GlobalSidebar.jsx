@@ -4,7 +4,7 @@ import './GlobalSidebar.css';
 
 const GlobalSidebar = ({ activeTab, onTabChange, onLogout, isDark, toggleTheme }) => {
     const navItems = [
-        { id: 'goals', label: 'Goals', icon: Target },
+        { id: 'roadmap', label: 'Roadmap', icon: Target },
         { id: 'tasks', label: 'Tasks', icon: CheckSquare },
         { id: 'planner', label: 'Planner', icon: Clock },
         { id: 'habits', label: 'Habits', icon: Heart },

@@ -251,14 +251,17 @@
   border-left: 1px solid var(--border-color);
   transition: width 0.3s ease;
   overflow: hidden;
+  /* hides panel when width=0 */
   position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
+/* When open, let the child editor manage its own scrolling */
 .right-panel.open {
-  width: 400px;
+  width: 480px;
+  overflow: visible;
 }
 
 @media (max-width: 1200px) {

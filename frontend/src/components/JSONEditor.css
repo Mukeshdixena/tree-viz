@@ -1,127 +1,355 @@
-.json-editor-container {
+/* ── VS Code-style JSON Editor ────────────────────────────── */
+
+.vsc-editor {
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: var(--bg-primary);
-    color: var(--text-secondary);
-    border-left: 1px solid var(--border-color);
-}
-
-.editor-header {
-    padding: 12px 16px;
-    background: var(--bg-secondary);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.editor-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--primary);
-}
-
-.header-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.header-btn {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    color: var(--text-muted);
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.header-btn:hover {
-    background: var(--border-color);
-    color: var(--text-primary);
-}
-
-.header-btn.secondary {
-    background: transparent;
-    border-color: var(--border-color);
-    color: var(--text-muted);
-}
-
-.header-btn.secondary:hover {
-    border-color: var(--text-secondary);
-    color: var(--text-secondary);
-}
-
-
-.editor-wrapper {
-    flex: 1;
-    overflow: auto;
+    width: 100%;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Menlo', 'Monaco', monospace;
+    font-size: 13px;
+    overflow: hidden;
     position: relative;
 }
 
-.code-editor {
-    min-height: 100%;
-    outline: none;
+/* ── Title bar ─────────────────────────────────────────────── */
+.vsc-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    height: 38px;
+    background: #252526;
+    border-bottom: 1px solid #3c3c3c;
+    flex-shrink: 0;
+    gap: 8px;
+}
+
+.vsc-title-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.vsc-dots {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.vsc-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    display: block;
+}
+
+.vsc-dot.red {
+    background: #ff5f57;
+}
+
+.vsc-dot.yellow {
+    background: #febc2e;
+}
+
+.vsc-dot.green {
+    background: #28c840;
+}
+
+.vsc-title-icon {
+    color: #e8bf6a;
+    flex-shrink: 0;
+}
+
+.vsc-filename {
+    font-size: 12px;
+    font-weight: 500;
+    color: #cccccc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vsc-modified {
+    width: 7px;
+    height: 7px;
+    background: #cccccc;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.vsc-title-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.vsc-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     background: transparent;
-    color: var(--text-primary);
-    padding: 1rem;
-    font-family: 'Fira Code', monospace;
+    border: 1px solid transparent;
+    color: #9d9d9d;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
 }
 
-.editor-footer {
-    padding: 8px 16px;
-    background: var(--primary);
-    min-height: 32px;
+.vsc-action-btn:hover {
+    background: #3c3c3c;
+    color: #d4d4d4;
+    border-color: #5a5a5a;
+}
+
+.vsc-save-btn {
     display: flex;
     align-items: center;
-    color: white;
+    gap: 4px;
+    background: #0e7dd5;
+    border: 1px solid #1a8be0;
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
 }
 
-.status-error {
+.vsc-save-btn:hover:not(.disabled) {
+    background: #1a9de8;
+}
+
+.vsc-save-btn.disabled {
+    background: #555;
+    border-color: #555;
+    color: #888;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* ── Editor body ───────────────────────────────────────────── */
+.vsc-body {
     display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    color: var(--danger);
-    background: rgba(239, 68, 68, 0.1);
-    width: 100%;
-    margin: -8px -16px;
-    padding: 8px 16px;
+    flex: 1;
+    min-height: 0;
+    /* critical: allows flex child to shrink */
+    overflow: hidden;
 }
 
-.status-success {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    color: white;
-    opacity: 0;
-    transition: opacity 0.3s;
+/* Line-numbers gutter */
+.vsc-gutter {
+    flex-shrink: 0;
+    width: 52px;
+    background: #1e1e1e;
+    border-right: 1px solid #2d2d2d;
+    overflow: hidden;
+    /* scrolled programmatically */
+    padding: 12px 0;
+    user-select: none;
+    text-align: right;
 }
 
-.status-success.visible {
-    opacity: 1;
+.vsc-line-num {
+    height: 20px;
+    line-height: 20px;
+    padding-right: 14px;
+    color: #5a5a5a;
+    font-size: 12px;
+    transition: color 0.1s;
 }
 
-/* Scrollbar for editor */
-.editor-wrapper::-webkit-scrollbar {
+.vsc-line-num:hover {
+    color: #9d9d9d;
+}
+
+/* Scrollable pane */
+.vsc-scroll-pane {
+    flex: 1;
+    position: relative;
+    overflow: auto;
+    /* THE key fix: this is the only scrolling element */
+    min-width: 0;
+    /* Custom scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: #4a4a4a #1e1e1e;
+}
+
+.vsc-scroll-pane::-webkit-scrollbar {
     width: 10px;
+    height: 10px;
 }
 
-.editor-wrapper::-webkit-scrollbar-track {
-    background: var(--bg-primary);
+.vsc-scroll-pane::-webkit-scrollbar-track {
+    background: #1e1e1e;
 }
 
-.editor-wrapper::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+.vsc-scroll-pane::-webkit-scrollbar-thumb {
+    background: #424242;
     border-radius: 5px;
+    border: 2px solid #1e1e1e;
 }
 
-.editor-wrapper::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
+.vsc-scroll-pane::-webkit-scrollbar-thumb:hover {
+    background: #5a5a5a;
+}
+
+.vsc-scroll-pane::-webkit-scrollbar-corner {
+    background: #1e1e1e;
+}
+
+/* Highlight layer & textarea share the same positioning */
+.vsc-highlight-layer,
+.vsc-textarea {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 12px 16px;
+    /* Match exactly */
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', 'Menlo', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 20px;
+    tab-size: 2;
+    white-space: pre;
+    word-wrap: normal;
+    min-width: 100%;
+    min-height: 100%;
+    box-sizing: border-box;
+}
+
+.vsc-highlight-layer {
+    color: #d4d4d4;
+    background: transparent;
+    pointer-events: none;
+    border: none;
+    overflow: visible;
+    z-index: 1;
+    /* Needs to be at least as wide as content */
+    width: max-content;
+}
+
+.vsc-highlight-layer.wrap {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    width: 100%;
+}
+
+.vsc-textarea {
+    color: transparent;
+    background: transparent;
+    caret-color: #aeafad;
+    border: none;
+    outline: none;
+    resize: none;
+    z-index: 2;
+    -webkit-text-fill-color: transparent;
+    overflow: hidden;
+    /* textarea itself does NOT scroll */
+    width: max-content;
+    min-width: 100%;
+}
+
+.vsc-textarea.wrap {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    width: 100%;
+}
+
+.vsc-textarea::selection {
+    background: rgba(38, 79, 120, 0.6);
+    -webkit-text-fill-color: transparent;
+}
+
+/* ── Syntax colors (VS Code Dark+) ─────────────────────────── */
+.jt-key {
+    color: #9cdcfe;
+}
+
+/* light blue  — JSON keys   */
+.jt-string {
+    color: #ce9178;
+}
+
+/* orange      — string vals */
+.jt-number {
+    color: #b5cea8;
+}
+
+/* light green — numbers     */
+.jt-bool {
+    color: #569cd6;
+}
+
+/* blue        — true/false  */
+.jt-null {
+    color: #569cd6;
+}
+
+/* blue        — null        */
+.jt-brace {
+    color: #ffd700;
+}
+
+/* gold        — {} []       */
+
+/* ── Status bar ────────────────────────────────────────────── */
+.vsc-statusbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    height: 26px;
+    background: #007acc;
+    color: #fff;
+    font-size: 11px;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.vsc-statusbar.has-error {
+    background: #c72e0f;
+}
+
+.vsc-statusbar.has-success {
+    background: #1a8f5a;
+}
+
+.vsc-status-left,
+.vsc-status-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vsc-status-left svg {
+    opacity: 0.9;
+}
+
+.vsc-status-right span {
+    opacity: 0.8;
+    font-size: 11px;
+    padding: 0 4px;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.vsc-status-right span:first-child {
+    border-left: none;
+}
+
+.vsc-hint {
+    opacity: 0.65;
+    font-style: italic;
 }

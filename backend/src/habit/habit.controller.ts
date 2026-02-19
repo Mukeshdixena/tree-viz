@@ -27,8 +27,21 @@ export class HabitController {
         return this.habitService.delete(req.user.userId, id);
     }
 
+    // New numeric log endpoint — logs a specific value (hours/count) for a date
+    @Post(':id/log')
+    async logHabit(@Request() req, @Param('id') id: string, @Body() body: { date: string; value: number }) {
+        return this.habitService.logValue(req.user.userId, id, body.date, body.value);
+    }
+
+    // Kept for backward compatibility with existing DayPlanner toggle chips
     @Post(':id/toggle')
     async toggleHabit(@Request() req, @Param('id') id: string, @Body('date') date: string) {
         return this.habitService.toggleLog(req.user.userId, id, date);
+    }
+
+    // Get cumulative stats for a habit
+    @Get(':id/stats')
+    async getHabitStats(@Request() req, @Param('id') id: string) {
+        return this.habitService.getStats(req.user.userId, id);
     }
 }

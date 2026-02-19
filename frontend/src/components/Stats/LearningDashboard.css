@@ -607,3 +607,263 @@
     text-align: center;
     padding: 1rem 0;
 }
+
+/* ══ Habit Numeric Logging ══ */
+.ld-habit-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ld-habit-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.ld-habit-top-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ld-habit-progress-bar-track {
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.ld-habit-progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    min-width: 4px;
+}
+
+.ld-habit-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ld-habit-cumulative {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.ld-habit-target {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.ld-habit-log-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.ld-habit-log-input {
+    width: 64px;
+    background: var(--bg-primary);
+    border: 1px solid var(--hc, var(--primary));
+    border-radius: 8px;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    outline: none;
+    transition: box-shadow 0.2s;
+}
+
+.ld-habit-log-input:focus {
+    box-shadow: 0 0 0 3px var(--hc, var(--primary))30;
+}
+
+.ld-habit-log-unit {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    max-width: 48px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Add habit form extras */
+.ld-habit-meta-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.ld-habit-meta-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.ld-habit-meta-group label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.ld-habit-num-input {
+    width: 80px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.ld-habit-select {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    outline: none;
+    cursor: pointer;
+}
+
+/* ══ Task Progress Tracker (count-type tasks) ══ */
+.ld-dsa-card {
+    border-left: 3px solid #6366f1;
+}
+
+.ld-dsa-badge {
+    margin-left: auto;
+    background: #6366f120;
+    color: #6366f1;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+}
+
+.ld-dsa-main {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.ld-dsa-numbers {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 100px;
+    padding: 0.5rem 0;
+}
+
+.ld-dsa-big {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #6366f1;
+    line-height: 1;
+}
+
+.ld-dsa-of {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-top: 0.2rem;
+}
+
+.ld-dsa-avg {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+    background: var(--bg-tertiary);
+    padding: 0.2rem 0.5rem;
+    border-radius: 20px;
+}
+
+.ld-dsa-bar-wrap {
+    flex: 1;
+    min-width: 0;
+}
+
+.ld-dsa-bar-track {
+    height: 10px;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.ld-dsa-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    border-radius: 10px;
+    min-width: 4px;
+}
+
+.ld-dsa-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ld-dsa-task-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+}
+
+.ld-dsa-task-name {
+    flex: 1;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ld-dsa-task-count {
+    font-weight: 700;
+    color: #6366f1;
+    white-space: nowrap;
+}
+
+.ld-dsa-task-status {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.ld-dsa-task-status.todo {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.ld-dsa-task-status.in-progress {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.ld-dsa-task-status.done {
+    background: #ecfdf5;
+    color: #10b981;
+}

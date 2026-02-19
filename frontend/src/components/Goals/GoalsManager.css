@@ -1,0 +1,675 @@
+/* ============ GOALS MANAGER ============ */
+
+.gm-container {
+    padding: 2rem;
+    min-height: 100vh;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    overflow-y: auto;
+}
+
+/* ── Loading ── */
+.gm-loading {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* ── Header ── */
+.gm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.gm-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 0.35rem 0;
+}
+
+.gm-header p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.gm-new-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.65rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.gm-new-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+}
+
+/* ── Summary Row ── */
+.gm-summary-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .gm-summary-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.gm-summary-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.25rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.gm-summary-val {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.gm-summary-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+/* ── Goals Grid ── */
+.gm-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
+    align-items: start;
+}
+
+/* ── Goal Card ── */
+.gm-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+
+.gm-card:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+}
+
+.gm-card.done {
+    border-color: #10b98130;
+    background: #10b9810a;
+}
+
+.gm-card-header {
+    padding: 1.25rem;
+}
+
+.gm-card-top {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.gm-color-bar {
+    width: 4px;
+    border-radius: 4px;
+    min-height: 60px;
+    flex-shrink: 0;
+}
+
+.gm-card-meta {
+    flex: 1;
+    min-width: 0;
+}
+
+.gm-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem 0;
+}
+
+.gm-card-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0 0 0.5rem 0;
+    line-height: 1.4;
+}
+
+.gm-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.gm-tag {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-muted);
+}
+
+.gm-tag.done-tag {
+    background: #ecfdf5;
+    border-color: #10b981;
+    color: #10b981;
+}
+
+.gm-donut-area {
+    flex-shrink: 0;
+}
+
+.gm-donut-wrap svg {
+    display: block;
+}
+
+/* ── Progress ── */
+.gm-progress-section {
+    margin-bottom: 1rem;
+}
+
+.gm-progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
+}
+
+.gm-progress-current {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--goal-color, var(--primary));
+}
+
+.gm-progress-total {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.gm-progress-track {
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.gm-progress-fill {
+    height: 100%;
+    border-radius: 8px;
+    min-width: 4px;
+}
+
+.gm-remaining {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin: 0.3rem 0 0 0;
+}
+
+/* ── Milestones ── */
+.gm-milestones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.gm-milestone {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+.gm-milestone.achieved {
+    opacity: 1;
+    color: var(--goal-color, var(--primary));
+}
+
+.gm-milestone-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    flex-shrink: 0;
+}
+
+.gm-milestone.achieved .gm-milestone-dot {
+    border-color: var(--goal-color, var(--primary));
+}
+
+/* ── Weekly mini bars ── */
+.gm-weekly-bars {
+    display: flex;
+    gap: 4px;
+    height: 48px;
+    align-items: flex-end;
+    margin-bottom: 0.25rem;
+}
+
+.gm-bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    height: 100%;
+}
+
+.gm-bar-track {
+    flex: 1;
+    width: 100%;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.gm-bar-fill {
+    width: 100%;
+    border-radius: 2px;
+    min-height: 2px;
+}
+
+.gm-bar-label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+/* ── Card Actions ── */
+.gm-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-primary);
+}
+
+.gm-log-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gm-log-btn:hover {
+    background: var(--bg-secondary);
+}
+
+.gm-edit-btn,
+.gm-del-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.45rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+.gm-del-btn:hover {
+    background: #fee2e2;
+    color: #ef4444;
+    border-color: #fecaca;
+}
+
+.gm-edit-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* ── Log Panel ── */
+.gm-log-panel {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--border-color);
+    overflow: hidden;
+    align-items: center;
+}
+
+.gm-log-input {
+    flex: 1;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.gm-log-input:focus {
+    border-color: var(--primary);
+}
+
+.gm-log-confirm {
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.gm-log-cancel {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+/* ── Empty State ── */
+.gm-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.gm-empty h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.gm-empty p {
+    color: var(--text-muted);
+    max-width: 320px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ══ Modal Form ══ */
+.gm-form-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.gm-form {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+}
+
+.gm-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.gm-form-header h2 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.gm-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0.25rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.gm-close-btn:hover {
+    color: var(--text-primary);
+}
+
+.gm-form-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.gm-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.gm-field label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.gm-input {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.gm-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.gm-select {
+    cursor: pointer;
+}
+
+.gm-field-row {
+    display: grid;
+    grid-template-columns: 1fr 120px 140px;
+    gap: 0.75rem;
+}
+
+@media (max-width: 500px) {
+    .gm-field-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.gm-color-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.gm-color-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.gm-color-dot.active {
+    border-color: white;
+    transform: scale(1.25);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Milestones */
+.gm-field-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.gm-add-milestone-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: var(--primary-light);
+    color: var(--primary);
+    border: none;
+    border-radius: 6px;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+}
+
+.gm-milestone-row {
+    display: grid;
+    grid-template-columns: 1fr 80px auto auto;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 0.4rem;
+}
+
+.gm-milestone-unit {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.gm-del-milestone {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    padding: 0.2rem;
+    border-radius: 4px;
+    transition: color 0.2s;
+}
+
+.gm-del-milestone:hover {
+    color: #ef4444;
+}
+
+/* Form actions */
+.gm-form-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.gm-cancel-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.6rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.gm-save-btn {
+    color: white;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.gm-save-btn:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.gm-save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

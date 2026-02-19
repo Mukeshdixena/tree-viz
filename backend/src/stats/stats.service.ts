@@ -49,13 +49,45 @@ export class StatsService {
             .sort((a, b) => b.date - a.date)
             .slice(0, 5);
 
+        // ── Count-Task Progress Stats ──
+        // All tasks with a numeric target (targetType='count') — works for any user goal
+        const countTasks = tasks.filter(t => t.targetType === 'count' && (t.targetTotal || 0) > 0);
+
+        const countTotalDone = countTasks.reduce((sum, t) => sum + (t.targetCurrent || 0), 0);
+        const countTotalGoal = countTasks.reduce((sum, t) => sum + (t.targetTotal || 0), 0);
+
+        // Daily average: from earliest task creation date
+        let countDailyAvg = 0;
+        if (countTotalDone > 0 && countTasks.length > 0) {
+            const earliest = countTasks.reduce((min, t) => {
+                const created = (t as any).createdAt?.getTime() || Date.now();
+                return created < min ? created : min;
+            }, Date.now());
+            const daysSinceStart = Math.max(1, Math.ceil((Date.now() - earliest) / (1000 * 86400)));
+            countDailyAvg = Math.round((countTotalDone / daysSinceStart) * 10) / 10;
+        }
+
         return {
-            totalHours: 0, // Placeholder
+            totalHours: 0,
             streak,
             completedGoals,
             activeGoals,
             topicMastery,
-            recentActivity
+            recentActivity,
+            // Count-type task progress stats (all tasks with numeric targets)
+            countStats: {
+                totalDone: countTotalDone,
+                goal: countTotalGoal,
+                dailyAvg: countDailyAvg,
+                tasks: countTasks.map(t => ({
+                    id: t._id,
+                    title: t.title,
+                    current: t.targetCurrent,
+                    total: t.targetTotal,
+                    status: t.status,
+                    unit: (t as any).targetValue || 'units',
+                })),
+            }
         };
     }
 
@@ -104,7 +136,6 @@ export class StatsService {
                 streak++;
                 current.setDate(current.getDate() - 1);
             } else if (diffDays === 1 && i === 0) {
-                // If no entry today but entry yesterday, start counting from yesterday
                 streak++;
                 current = entryDate;
                 current.setDate(current.getDate() - 1);

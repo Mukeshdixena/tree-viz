@@ -8,6 +8,7 @@ import JournalEntry from './components/Journal/JournalEntry';
 import NotesManager from './components/Notes/NotesManager';
 import LearningDashboard from './components/Stats/LearningDashboard';
 import DayPlanner from './components/Planner/DayPlanner';
+import GoalsManager from './components/Goals/GoalsManager';
 
 import './App.css';
 
@@ -54,6 +55,7 @@ const MainLayout = ({ isDark, toggleTheme }) => {
           <Route path="/notes" element={<NotesManager />} />
 
           <Route path="/stats" element={<LearningDashboard />} />
+          <Route path="/goals" element={<GoalsManager />} />
         </Routes>
       </div>
     </div>

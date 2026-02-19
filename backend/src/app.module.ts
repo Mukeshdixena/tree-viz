@@ -10,6 +10,7 @@ import { GatewayModule } from './gateway/gateway.module';
 import { PlannerModule } from './planner/planner.module';
 import { HabitModule } from './habit/habit.module';
 import { SeedModule } from './seed/seed.module';
+import { GoalModule } from './goal/goal.module';
 
 @Module({
     imports: [
@@ -24,6 +25,7 @@ import { SeedModule } from './seed/seed.module';
         PlannerModule,
         HabitModule,
         SeedModule,
+        GoalModule,
     ],
 })
 export class AppModule { }

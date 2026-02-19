@@ -15,8 +15,15 @@ export class Habit extends Document {
     @Prop({ default: '#14b8a6' })
     color: string;
 
-    @Prop({ type: Map, of: Boolean, default: {} })
-    logs: Map<string, boolean>; // date string "YYYY-MM-DD" -> completed
+    // Stores numeric values per day: date string "YYYY-MM-DD" -> amount (hours/count/sessions)
+    @Prop({ type: Map, of: Number, default: {} })
+    logs: Map<string, number>;
+
+    @Prop({ default: 'session' })
+    unit: string; // e.g. "hours", "questions", "sessions", "km"
+
+    @Prop({ default: 1 })
+    dailyTarget: number; // target amount per day
 }
 
 export const HabitSchema = SchemaFactory.createForClass(Habit);

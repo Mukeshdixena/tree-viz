@@ -15,6 +15,9 @@ class TimeBlock {
     @Prop({ default: '' })
     reality: string;
 
+    @Prop({ default: '' })
+    tag: string;
+
     @Prop({ default: false })
     completed: boolean;
 }

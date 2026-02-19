@@ -12,6 +12,18 @@ const ICON_MAP = {
     Zap: <Zap size={16} />,
 };
 
+const TAGS = {
+    'none': { label: 'No Tag', color: '#94a3b8', bg: '#f1f5f9' },
+    'meditation': { label: 'Meditation', color: '#8b5cf6', bg: '#f5f3ff' },
+    'fitness': { label: 'Fitness', color: '#ef4444', bg: '#fef2f2' },
+    'dsa': { label: 'DSA', color: '#3b82f6', bg: '#eff6ff' },
+    'english': { label: 'English', color: '#f59e0b', bg: '#fffbeb' },
+    'work': { label: 'Work', color: '#10b981', bg: '#ecfdf5' },
+    'study': { label: 'Study', color: '#6366f1', bg: '#eef2ff' },
+    'rest': { label: 'Rest', color: '#64748b', bg: '#f8fafc' },
+    'family': { label: 'Family', color: '#ec4899', bg: '#fdf2f8' },
+};
+
 const DayPlanner = () => {
     const [planner, setPlanner] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -98,6 +110,7 @@ const DayPlanner = () => {
             startTime: nextStart,
             endTime: nextEnd,
             plan: '',
+            tag: 'none',
             reality: '',
             completed: false
         }];
@@ -133,7 +146,7 @@ const DayPlanner = () => {
             const routineData = {
                 name: newRoutineName,
                 icon: 'Sun',
-                blocks: planner.blocks.map(({ startTime, endTime, plan }) => ({ startTime, endTime, plan }))
+                blocks: planner.blocks.map(({ startTime, endTime, plan, tag }) => ({ startTime, endTime, plan, tag }))
             };
             await api.post('/routines', routineData);
             setNewRoutineName('');
@@ -176,7 +189,7 @@ const DayPlanner = () => {
         }
         setEditingRoutine({
             ...editingRoutine,
-            blocks: [...blocks, { startTime: start, endTime: end, plan: '' }]
+            blocks: [...blocks, { startTime: start, endTime: end, plan: '', tag: 'none' }]
         });
     };
 
@@ -384,6 +397,19 @@ const DayPlanner = () => {
                                                             placeholder="Plan..."
                                                             className="mini-plan-input"
                                                         />
+                                                        <select
+                                                            value={block.tag || 'none'}
+                                                            onChange={e => updateRoutineBlock(idx, 'tag', e.target.value)}
+                                                            className="mini-tag-select"
+                                                            style={{
+                                                                color: TAGS[block.tag || 'none']?.color,
+                                                                backgroundColor: TAGS[block.tag || 'none']?.bg
+                                                            }}
+                                                        >
+                                                            {Object.entries(TAGS).map(([val, { label }]) => (
+                                                                <option key={val} value={val}>{label}</option>
+                                                            ))}
+                                                        </select>
                                                         <button onClick={() => removeRoutineBlock(idx)} className="mini-delete-btn">
                                                             <Trash2 size={14} />
                                                         </button>
@@ -456,6 +482,23 @@ const DayPlanner = () => {
                                     onChange={(e) => updateBlockText(index, 'plan', e.target.value)}
                                     className="plan-input"
                                 />
+                                <div className="tag-selector-container">
+                                    <select
+                                        value={block.tag || 'none'}
+                                        onChange={(e) => updateBlockText(index, 'tag', e.target.value)}
+                                        className="tag-select"
+                                        style={{
+                                            color: TAGS[block.tag || 'none']?.color,
+                                            backgroundColor: TAGS[block.tag || 'none']?.bg,
+                                            borderColor: TAGS[block.tag || 'none']?.color + '40'
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        {Object.entries(TAGS).map(([val, { label }]) => (
+                                            <option key={val} value={val}>{label}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
                             <div className="block-actions">

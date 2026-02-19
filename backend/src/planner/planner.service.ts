@@ -22,25 +22,15 @@ export class PlannerService {
 
     async createDefault(userId: string, date: string): Promise<any> {
         const blocks = [];
-        for (let i = 6; i < 24; i++) {
-            const hour = i < 10 ? `0${i}:00` : `${i}:00`;
-            const nextHour = (i + 1) < 10 ? `0${i + 1}:00` : `${(i + 1)}:00`;
-            blocks.push({
-                startTime: hour,
-                endTime: nextHour,
-                plan: '',
-                reality: '',
-                completed: false
-            });
-        }
         const newPlanner = new this.plannerModel({ userId: new Types.ObjectId(userId), date, blocks });
         return newPlanner.save();
     }
 
     async update(userId: string, date: string, data: any): Promise<any> {
+        const { blocks, summary } = data;
         return this.plannerModel.findOneAndUpdate(
             { userId: new Types.ObjectId(userId), date },
-            { $set: data },
+            { $set: { blocks, summary } },
             { new: true }
         ).exec();
     }

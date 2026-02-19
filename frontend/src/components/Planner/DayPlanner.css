@@ -111,6 +111,83 @@
     box-shadow: 0 4px 12px var(--primary-light);
 }
 
+.routine-selector {
+    position: relative;
+}
+
+.routine-trigger {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.routine-trigger:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.routine-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    padding: 0.5rem;
+    width: 220px;
+    z-index: 100;
+}
+
+.routine-option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.routine-option:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.routine-option svg {
+    color: var(--primary);
+}
+
+.routine-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 0.5rem 0;
+}
+
+.clear-btn:hover {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.clear-btn svg {
+    color: #ef4444;
+}
+
 .planner-main {
     flex: 1;
     display: grid;
@@ -137,9 +214,10 @@
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 0.75rem;
+    padding: 1rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    min-height: 80px;
 }
 
 .time-block:hover {
@@ -160,7 +238,7 @@
 }
 
 .time-col {
-    width: 80px;
+    width: 100px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -169,11 +247,44 @@
     font-weight: 500;
 }
 
-.time-divider {
-    height: 12px;
-    width: 2px;
-    background: var(--border-color);
-    margin: 2px 0;
+.time-input {
+    background: transparent;
+    border: 1px solid transparent;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-family: inherit;
+    padding: 2px 4px;
+    border-radius: 4px;
+    width: 100%;
+    text-align: center;
+    cursor: pointer;
+}
+
+.time-input:hover {
+    border-color: var(--border-color);
+    background: var(--bg-tertiary);
+}
+
+.time-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--bg-primary);
+}
+
+/* Remove default clock icon in some browsers */
+.time-input::-webkit-calendar-picker-indicator {
+    display: none;
+}
+
+.duration-tag {
+    font-size: 0.7rem;
+    color: var(--primary);
+    background: var(--primary-light);
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 700;
+    margin: 4px 0;
+    white-space: nowrap;
 }
 
 .plan-col {
@@ -211,6 +322,55 @@
 
 .status-toggle.is-done {
     color: #10b981;
+}
+
+.block-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.delete-block-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0.5rem;
+    border-radius: 6px;
+    opacity: 0;
+}
+
+.time-block:hover .delete-block-btn {
+    opacity: 1;
+}
+
+.delete-block-btn:hover {
+    color: #ef4444;
+    background: #fee2e2;
+}
+
+.add-block-btn {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.add-block-btn:hover {
+    background: var(--bg-primary);
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .reality-sidebar {

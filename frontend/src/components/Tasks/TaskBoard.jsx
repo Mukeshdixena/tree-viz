@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, CheckCircle, Clock, Circle, PlusCircle } from 'lucide-react';
 import { api } from '../../api';
 import './TaskBoard.css';
+import { subscribeToUpdates, unsubscribeFromUpdates } from '../../socket';
 
 const TaskBoard = () => {
     const [tasks, setTasks] = useState([]);
@@ -10,13 +11,24 @@ const TaskBoard = () => {
         title: '',
         priority: 'medium',
         targetType: 'none',
-        targetValue: ''
+        targetValue: '',
+        targetTotal: 0
     });
     const [editingTask, setEditingTask] = useState(null);
     const [isAddingTask, setIsAddingTask] = useState(false);
 
     useEffect(() => {
         fetchTasks();
+
+        subscribeToUpdates((update) => {
+            if (update.type === 'task' || update.type === 'planner') {
+                fetchTasks();
+            }
+        });
+
+        return () => {
+            unsubscribeFromUpdates();
+        };
     }, []);
 
     const fetchTasks = async () => {
@@ -41,7 +53,8 @@ const TaskBoard = () => {
                 title: '',
                 priority: 'medium',
                 targetType: 'none',
-                targetValue: ''
+                targetValue: '',
+                targetTotal: 0
             });
             setIsAddingTask(false);
         }
@@ -82,7 +95,7 @@ const TaskBoard = () => {
         <div className="task-board">
             <header className="board-header">
                 <div className="header-left">
-                    <h2>Daily Tasks</h2>
+                    <h2>Tasks</h2>
                     <p className="task-count-subtitle">{tasks.length} active tasks</p>
                 </div>
                 <button className="add-task-trigger-btn" onClick={() => setIsAddingTask(true)}>
@@ -105,9 +118,17 @@ const TaskBoard = () => {
                                     <div className="task-content">
                                         <p>{task.title}</p>
                                         {task.targetType !== 'none' && (
-                                            <div className="task-target-badge">
-                                                {task.targetType === 'time' ? <Clock size={12} /> : <PlusCircle size={12} />}
-                                                <span>{task.targetValue}</span>
+                                            <div className="task-progress-container">
+                                                <div className="task-target-badge">
+                                                    {task.targetType === 'time' ? <Clock size={12} /> : <PlusCircle size={12} />}
+                                                    <span>{task.targetCurrent} / {task.targetTotal} {task.targetValue}</span>
+                                                </div>
+                                                <div className="task-progress-bar-bg">
+                                                    <div
+                                                        className="task-progress-bar-fill"
+                                                        style={{ width: `${Math.min(100, (task.targetCurrent / task.targetTotal) * 100) || 0}%` }}
+                                                    ></div>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -181,15 +202,25 @@ const TaskBoard = () => {
                                         </select>
                                     </div>
                                     {editingTask.targetType !== 'none' && (
-                                        <div className="form-group">
-                                            <label>Target Value</label>
-                                            <input
-                                                type="text"
-                                                value={editingTask.targetValue}
-                                                onChange={e => setEditingTask({ ...editingTask, targetValue: e.target.value })}
-                                                placeholder="e.g. 5h or 20 items"
-                                            />
-                                        </div>
+                                        <>
+                                            <div className="form-group">
+                                                <label>Target Label</label>
+                                                <input
+                                                    type="text"
+                                                    value={editingTask.targetValue}
+                                                    onChange={e => setEditingTask({ ...editingTask, targetValue: e.target.value })}
+                                                    placeholder="e.g. questions, hours"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Target Total</label>
+                                                <input
+                                                    type="number"
+                                                    value={editingTask.targetTotal}
+                                                    onChange={e => setEditingTask({ ...editingTask, targetTotal: parseInt(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                        </>
                                     )}
                                 </div>
                             </div>
@@ -250,14 +281,25 @@ const TaskBoard = () => {
                                     </div>
                                 </div>
                                 {newTask.targetType !== 'none' && (
-                                    <div className="form-group">
-                                        <label>Target Value</label>
-                                        <input
-                                            type="text"
-                                            placeholder={newTask.targetType === 'time' ? "e.g. 2h or 45m" : "e.g. 10 problems or 5 pages"}
-                                            value={newTask.targetValue}
-                                            onChange={e => setNewTask({ ...newTask, targetValue: e.target.value })}
-                                        />
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label>Target Label</label>
+                                            <input
+                                                type="text"
+                                                placeholder={newTask.targetType === 'time' ? "e.g. hours" : "e.g. questions"}
+                                                value={newTask.targetValue}
+                                                onChange={e => setNewTask({ ...newTask, targetValue: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Target Total</label>
+                                            <input
+                                                type="number"
+                                                placeholder="e.g. 150"
+                                                value={newTask.targetTotal}
+                                                onChange={e => setNewTask({ ...newTask, targetTotal: parseInt(e.target.value) || 0 })}
+                                            />
+                                        </div>
                                     </div>
                                 )}
                             </div>

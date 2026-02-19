@@ -23,6 +23,12 @@ export class Task extends Document {
 
     @Prop({ default: '' })
     targetValue: string;
+
+    @Prop({ default: 0 })
+    targetTotal: number;
+
+    @Prop({ default: 0 })
+    targetCurrent: number;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

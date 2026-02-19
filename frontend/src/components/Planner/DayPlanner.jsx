@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, CheckCircle2, Circle, Clock, ChevronLeft, ChevronRight, Save, Layout, Trash2, Plus, Zap, Coffee, Sunrise, Sun, Moon, Edit3, PlusCircle } from 'lucide-react';
 import { api } from '../../api';
+import { subscribeToUpdates, unsubscribeFromUpdates } from '../../socket';
 import './DayPlanner.css';
 
 const ICON_MAP = {
@@ -39,6 +40,7 @@ const DayPlanner = () => {
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedBlockIndex, setSelectedBlockIndex] = useState(null);
+    const [tasks, setTasks] = useState([]);
     const [routines, setRoutines] = useState([]);
     const [showRoutines, setShowRoutines] = useState(false);
     const [isSavingRoutine, setIsSavingRoutine] = useState(false);
@@ -73,6 +75,15 @@ const DayPlanner = () => {
         }
     };
 
+    const fetchTasks = async () => {
+        try {
+            const data = await api.get('/task');
+            if (data) setTasks(data);
+        } catch (error) {
+            console.error("Error fetching tasks:", error);
+        }
+    };
+
     const fetchMonthData = async (monthDate) => {
         try {
             const year = monthDate.getFullYear();
@@ -87,6 +98,18 @@ const DayPlanner = () => {
     useEffect(() => {
         fetchPlanner(selectedDate);
         fetchRoutines();
+        fetchTasks();
+
+        subscribeToUpdates((update) => {
+            if (update.type === 'task' || update.type === 'planner') {
+                if (update.type === 'task') fetchTasks();
+                if (update.type === 'planner' && update.date === selectedDate) fetchPlanner(selectedDate);
+            }
+        });
+
+        return () => {
+            unsubscribeFromUpdates();
+        };
     }, [selectedDate]);
 
     useEffect(() => {
@@ -659,6 +682,43 @@ const DayPlanner = () => {
                                             <span>{planner.blocks[selectedBlockIndex].startTime} - {planner.blocks[selectedBlockIndex].endTime}</span>
                                         </div>
                                         <div className="reality-section">
+                                            <div className="task-link-group">
+                                                <label>Link to Task</label>
+                                                <select
+                                                    value={planner.blocks[selectedBlockIndex].taskId || ''}
+                                                    onChange={(e) => updateBlockText(selectedBlockIndex, 'taskId', e.target.value)}
+                                                    className="sidebar-select"
+                                                >
+                                                    <option value="">No linked task</option>
+                                                    {tasks.filter(t => t.status !== 'done').map(t => (
+                                                        <option key={t._id} value={t._id}>{t.title}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            {planner.blocks[selectedBlockIndex].taskId && (
+                                                <div className="progress-input-group">
+                                                    <div className="label-row">
+                                                        <label>Progress Made</label>
+                                                        {tasks.find(t => t._id === planner.blocks[selectedBlockIndex].taskId) && (
+                                                            <span className="task-overall-mini">
+                                                                Overall: {tasks.find(t => t._id === planner.blocks[selectedBlockIndex].taskId).targetCurrent} / {tasks.find(t => t._id === planner.blocks[selectedBlockIndex].taskId).targetTotal}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="progress-input-wrapper">
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Amount done..."
+                                                            value={planner.blocks[selectedBlockIndex].progressMade || ''}
+                                                            onChange={(e) => updateBlockText(selectedBlockIndex, 'progressMade', parseInt(e.target.value) || 0)}
+                                                        />
+                                                        <span>{tasks.find(t => t._id === planner.blocks[selectedBlockIndex].taskId)?.targetValue || 'units'}</span>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <label>Notes / Reality</label>
                                             <textarea
                                                 placeholder="What happened during this hour? Record achievements, notes, or thoughts..."
                                                 value={planner.blocks[selectedBlockIndex].reality}

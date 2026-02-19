@@ -23,7 +23,15 @@ class TimeBlock {
 
     @Prop({ default: false })
     completed: boolean;
+
+    @Prop({ type: Types.ObjectId, ref: 'Task', default: null })
+    taskId: Types.ObjectId;
+
+    @Prop({ default: 0 })
+    progressMade: number;
 }
+
+const TimeBlockSchema = SchemaFactory.createForClass(TimeBlock);
 
 @Schema({ timestamps: true })
 export class Planner extends Document {
@@ -33,7 +41,7 @@ export class Planner extends Document {
     @Prop({ required: true })
     date: string; // YYYY-MM-DD
 
-    @Prop({ type: [TimeBlock], default: [] })
+    @Prop({ type: [TimeBlockSchema], default: [] })
     blocks: TimeBlock[];
 
     @Prop({ default: '' })

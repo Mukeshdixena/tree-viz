@@ -25,7 +25,7 @@ export class PlannerController {
     @Put()
     async updatePlanner(@Request() req, @Body() body: any) {
         const result = await this.plannerService.update(req.user.userId, body.date, body);
-        this.gateway.server.emit('dataUpdated', { type: 'planner', action: 'update', userId: req.user.userId });
+        this.gateway.server.emit('dataUpdated', { type: 'planner', action: 'update', userId: req.user.userId, date: body.date });
         return result;
     }
 }

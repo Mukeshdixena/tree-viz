@@ -7,12 +7,14 @@ import { GatewayModule } from '../gateway/gateway.module';
 import { Routine, RoutineSchema } from './schemas/routine.schema';
 import { RoutineService } from './routine.service';
 import { RoutineController } from './routine.controller';
+import { Task, TaskSchema } from '../task/schemas/task.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Planner.name, schema: PlannerSchema },
-      { name: Routine.name, schema: RoutineSchema }
+      { name: Routine.name, schema: RoutineSchema },
+      { name: Task.name, schema: TaskSchema }
     ]),
     GatewayModule,
   ],

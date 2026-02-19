@@ -1,55 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, CheckCircle2, Circle, Clock, ChevronLeft, ChevronRight, Save, Layout, Trash2, Plus, Zap, Coffee, Sunrise, Sun, Moon } from 'lucide-react';
+import { Calendar, CheckCircle2, Circle, Clock, ChevronLeft, ChevronRight, Save, Layout, Trash2, Plus, Zap, Coffee, Sunrise, Sun, Moon, Edit3, PlusCircle } from 'lucide-react';
 import { api } from '../../api';
 import './DayPlanner.css';
 
-const ROUTINES = {
-    weekday: {
-        name: 'Weekday',
-        icon: <Sun size={16} />,
-        blocks: [
-            { startTime: "07:00", endTime: "08:00", plan: "Morning Routine", reality: "", completed: false },
-            { startTime: "08:00", endTime: "09:00", plan: "Deep Work / Focus", reality: "", completed: false },
-            { startTime: "09:00", endTime: "13:00", plan: "Primary Work Block", reality: "", completed: false },
-            { startTime: "13:00", endTime: "14:00", plan: "Lunch Break", reality: "", completed: false },
-            { startTime: "14:00", endTime: "17:00", plan: "Secondary Work Block", reality: "", completed: false },
-            { startTime: "17:00", endTime: "18:00", plan: "Exercise / Wind down", reality: "", completed: false },
-            { startTime: "18:00", endTime: "22:00", plan: "Family / Personal Time", reality: "", completed: false },
-        ]
-    },
-    weekend: {
-        name: 'Weekend',
-        icon: <Moon size={16} />,
-        blocks: [
-            { startTime: "09:00", endTime: "10:00", plan: "Slow Morning", reality: "", completed: false },
-            { startTime: "10:00", endTime: "13:00", plan: "Hobbies / Errands", reality: "", completed: false },
-            { startTime: "13:00", endTime: "15:00", plan: "Family Lunch", reality: "", completed: false },
-            { startTime: "15:00", endTime: "18:00", plan: "Relaxation / Outing", reality: "", completed: false },
-            { startTime: "18:00", endTime: "22:00", plan: "Evening Leisure", reality: "", completed: false },
-        ]
-    },
-    wokeuplate: {
-        name: 'Woke Up Late',
-        icon: <Coffee size={16} />,
-        blocks: [
-            { startTime: "10:30", endTime: "11:30", plan: "Quick Catchup", reality: "", completed: false },
-            { startTime: "11:30", endTime: "13:30", plan: "Focused Sprint", reality: "", completed: false },
-            { startTime: "13:30", endTime: "14:30", plan: "Lunch", reality: "", completed: false },
-            { startTime: "14:30", endTime: "18:00", plan: "Remaining Tasks", reality: "", completed: false },
-        ]
-    },
-    early4am: {
-        name: '4:00 AM Routine',
-        icon: <Sunrise size={16} />,
-        blocks: [
-            { startTime: "04:00", endTime: "05:00", plan: "Exercise / Workout", reality: "", completed: false },
-            { startTime: "05:00", endTime: "06:00", plan: "Reading / Planning", reality: "", completed: false },
-            { startTime: "06:00", endTime: "08:00", plan: "Deep Focus Session 1", reality: "", completed: false },
-            { startTime: "08:00", endTime: "09:00", plan: "Breakfast", reality: "", completed: false },
-            { startTime: "09:00", endTime: "12:00", plan: "Work Session 2", reality: "", completed: false },
-        ]
-    }
+const ICON_MAP = {
+    Sun: <Sun size={16} />,
+    Moon: <Moon size={16} />,
+    Sunrise: <Sunrise size={16} />,
+    Coffee: <Coffee size={16} />,
+    Zap: <Zap size={16} />,
 };
 
 const DayPlanner = () => {
@@ -57,7 +17,11 @@ const DayPlanner = () => {
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedBlockIndex, setSelectedBlockIndex] = useState(null);
+    const [routines, setRoutines] = useState([]);
     const [showRoutines, setShowRoutines] = useState(false);
+    const [isSavingRoutine, setIsSavingRoutine] = useState(false);
+    const [editingRoutine, setEditingRoutine] = useState(null);
+    const [newRoutineName, setNewRoutineName] = useState('');
 
     const fetchPlanner = async (date) => {
         setLoading(true);
@@ -75,8 +39,18 @@ const DayPlanner = () => {
         }
     };
 
+    const fetchRoutines = async () => {
+        try {
+            const data = await api.get('/routines');
+            if (data) setRoutines(data);
+        } catch (error) {
+            console.error("Error fetching routines:", error);
+        }
+    };
+
     useEffect(() => {
         fetchPlanner(selectedDate);
+        fetchRoutines();
     }, [selectedDate]);
 
     const handleUpdate = async (updatedPlanner) => {
@@ -141,12 +115,82 @@ const DayPlanner = () => {
         }
     };
 
-    const applyRoutine = (routineKey) => {
-        const routine = ROUTINES[routineKey];
-        if (routine) {
-            setPlanner({ ...planner, blocks: routine.blocks });
+    const applyRoutine = (routine) => {
+        if (routine && routine.blocks) {
+            const newBlocks = routine.blocks.map(b => ({
+                ...b,
+                reality: '',
+                completed: false
+            }));
+            setPlanner({ ...planner, blocks: newBlocks });
             setShowRoutines(false);
         }
+    };
+
+    const saveAsRoutine = async () => {
+        if (!newRoutineName.trim()) return;
+        try {
+            const routineData = {
+                name: newRoutineName,
+                icon: 'Sun',
+                blocks: planner.blocks.map(({ startTime, endTime, plan }) => ({ startTime, endTime, plan }))
+            };
+            await api.post('/routines', routineData);
+            setNewRoutineName('');
+            setIsSavingRoutine(false);
+            fetchRoutines();
+        } catch (error) {
+            console.error("Error saving routine:", error);
+        }
+    };
+
+    const deleteRoutine = async (id, e) => {
+        e.stopPropagation();
+        try {
+            await api.delete(`/routines/${id}`);
+            fetchRoutines();
+        } catch (error) {
+            console.error("Error deleting routine:", error);
+        }
+    };
+
+    const handleUpdateRoutine = async () => {
+        if (!editingRoutine.name.trim()) return;
+        try {
+            await api.put(`/routines/${editingRoutine._id}`, editingRoutine);
+            setEditingRoutine(null);
+            fetchRoutines();
+        } catch (error) {
+            console.error("Error updating routine:", error);
+        }
+    };
+
+    const addBlockToRoutine = () => {
+        const blocks = [...editingRoutine.blocks];
+        const lastBlock = blocks[blocks.length - 1];
+        let start = "09:00", end = "10:00";
+        if (lastBlock) {
+            start = lastBlock.endTime;
+            const [h, m] = start.split(':').map(Number);
+            end = `${(h + 1).toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+        setEditingRoutine({
+            ...editingRoutine,
+            blocks: [...blocks, { startTime: start, endTime: end, plan: '' }]
+        });
+    };
+
+    const updateRoutineBlock = (idx, field, val) => {
+        const blocks = [...editingRoutine.blocks];
+        blocks[idx][field] = val;
+        setEditingRoutine({ ...editingRoutine, blocks });
+    };
+
+    const removeRoutineBlock = (idx) => {
+        setEditingRoutine({
+            ...editingRoutine,
+            blocks: editingRoutine.blocks.filter((_, i) => i !== idx)
+        });
     };
 
     const getDuration = (start, end) => {
@@ -217,12 +261,30 @@ const DayPlanner = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: 10 }}
                                 >
-                                    {Object.entries(ROUTINES).map(([key, r]) => (
-                                        <button key={key} onClick={() => applyRoutine(key)} className="routine-option">
-                                            {r.icon}
-                                            {r.name}
+                                    <div className="routine-header">
+                                        <span>Your Routines</span>
+                                        <button className="add-routine-minimal" onClick={() => setIsSavingRoutine(true)}>
+                                            <Plus size={14} /> New
                                         </button>
-                                    ))}
+                                    </div>
+                                    <div className="routine-list">
+                                        {routines.map((r) => (
+                                            <div key={r._id} className="routine-item-wrapper">
+                                                <button onClick={() => applyRoutine(r)} className="routine-option">
+                                                    {ICON_MAP[r.icon] || <Sun size={16} />}
+                                                    <span>{r.name}</span>
+                                                </button>
+                                                <div className="routine-actions">
+                                                    <button className="routine-action-btn edit" onClick={(e) => { e.stopPropagation(); setEditingRoutine({ ...r }); setShowRoutines(false); }}>
+                                                        <Edit3 size={12} />
+                                                    </button>
+                                                    <button className="routine-action-btn delete" onClick={(e) => deleteRoutine(r._id, e)}>
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                     <div className="routine-divider"></div>
                                     <button onClick={() => setPlanner({ ...planner, blocks: [] })} className="routine-option clear-btn">
                                         <Trash2 size={16} />
@@ -232,6 +294,116 @@ const DayPlanner = () => {
                             )}
                         </AnimatePresence>
                     </div>
+
+                    <AnimatePresence>
+                        {isSavingRoutine && (
+                            <motion.div
+                                className="modal-overlay"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setIsSavingRoutine(false)}
+                            >
+                                <motion.div
+                                    className="routine-modal"
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0.9, opacity: 0 }}
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    <h3>Save Current as Routine</h3>
+                                    <input
+                                        type="text"
+                                        placeholder="Routine Name (e.g. Work Session)"
+                                        value={newRoutineName}
+                                        onChange={e => setNewRoutineName(e.target.value)}
+                                        autoFocus
+                                        className="modal-input"
+                                    />
+                                    <div className="modal-actions">
+                                        <button onClick={() => setIsSavingRoutine(false)} className="cancel-btn">Cancel</button>
+                                        <button onClick={saveAsRoutine} className="confirm-btn">Save Routine</button>
+                                    </div>
+                                </motion.div>
+                            </motion.div>
+                        )}
+
+                        {editingRoutine && (
+                            <motion.div
+                                className="modal-overlay"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setEditingRoutine(null)}
+                            >
+                                <motion.div
+                                    className="routine-modal routine-editor-modal"
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0.9, opacity: 0 }}
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    <header className="modal-header">
+                                        <h3>Edit Routine</h3>
+                                        <button onClick={() => setEditingRoutine(null)} className="close-modal-btn">×</button>
+                                    </header>
+
+                                    <div className="modal-body">
+                                        <div className="form-group">
+                                            <label>Routine Name</label>
+                                            <input
+                                                type="text"
+                                                value={editingRoutine.name}
+                                                onChange={e => setEditingRoutine({ ...editingRoutine, name: e.target.value })}
+                                                className="modal-input"
+                                            />
+                                        </div>
+
+                                        <div className="routine-blocks-editor">
+                                            <label>Template Blocks</label>
+                                            <div className="editor-blocks-list">
+                                                {editingRoutine.blocks.map((block, idx) => (
+                                                    <div key={idx} className="editor-block-item">
+                                                        <input
+                                                            type="time"
+                                                            value={block.startTime}
+                                                            onChange={e => updateRoutineBlock(idx, 'startTime', e.target.value)}
+                                                            className="mini-time-input"
+                                                        />
+                                                        <span className="arrow">→</span>
+                                                        <input
+                                                            type="time"
+                                                            value={block.endTime}
+                                                            onChange={e => updateRoutineBlock(idx, 'endTime', e.target.value)}
+                                                            className="mini-time-input"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            value={block.plan}
+                                                            onChange={e => updateRoutineBlock(idx, 'plan', e.target.value)}
+                                                            placeholder="Plan..."
+                                                            className="mini-plan-input"
+                                                        />
+                                                        <button onClick={() => removeRoutineBlock(idx)} className="mini-delete-btn">
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button onClick={addBlockToRoutine} className="mini-add-btn">
+                                                <Plus size={14} /> Add Block
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="modal-footer">
+                                        <button onClick={() => setEditingRoutine(null)} className="cancel-btn">Cancel</button>
+                                        <button onClick={handleUpdateRoutine} className="confirm-btn">Update Routine</button>
+                                    </div>
+                                </motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     <div className="progress-status">
                         <div className="progress-label">Your Promise: {progress}% Met</div>

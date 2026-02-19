@@ -1,6 +1,6 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
-
-const MONGO_URI = 'mongodb+srv://root:chintu@cluster0.alpyjmp.mongodb.net/tree-viz?appName=Cluster0';
+const MONGO_URI = process.env.MONGO_URI;
 
 const UserSchema = new mongoose.Schema({ username: { type: String, unique: true }, password: String });
 const TreeSchema = new mongoose.Schema({ userId: mongoose.Schema.Types.ObjectId, name: String });

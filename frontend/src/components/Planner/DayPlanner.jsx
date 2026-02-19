@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, CheckCircle2, Circle, Clock, ChevronLeft, ChevronRight, Save, Layout, Trash2, Plus, Zap, Coffee, Sunrise, Sun, Moon, Edit3, PlusCircle, Flame } from 'lucide-react';
+import Modal from '../Modal';
 import { api } from '../../api';
 import { subscribeToUpdates, unsubscribeFromUpdates } from '../../socket';
 import './DayPlanner.css';
@@ -50,6 +51,23 @@ const DayPlanner = () => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [monthData, setMonthData] = useState([]);
     const [habits, setHabits] = useState([]);
+    const [modal, setModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'alert',
+        onConfirm: () => { },
+    });
+
+    const showModal = (config) => {
+        setModal({
+            isOpen: true,
+            title: config.title || 'Action Required',
+            message: config.message || '',
+            type: config.type || 'alert',
+            onConfirm: config.onConfirm || (() => { }),
+        });
+    };
 
     const fetchPlanner = async (date) => {
         setLoading(true);
@@ -231,14 +249,23 @@ const DayPlanner = () => {
         }
     };
 
-    const deleteRoutine = async (id, e) => {
+    const deleteRoutine = async (id, name, e) => {
         e.stopPropagation();
-        try {
-            await api.delete(`/routines/${id}`);
-            fetchRoutines();
-        } catch (error) {
-            console.error("Error deleting routine:", error);
-        }
+        showModal({
+            title: 'Delete Routine',
+            message: `Are you sure you want to delete the routine "${name}"? This action cannot be undone.`,
+            type: 'confirm',
+            onConfirm: async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        await api.delete(`/routines/${id}`);
+                        fetchRoutines();
+                    } catch (error) {
+                        console.error("Error deleting routine:", error);
+                    }
+                }
+            }
+        });
     };
 
     const handleUpdateRoutine = async () => {
@@ -461,7 +488,7 @@ const DayPlanner = () => {
                                                     <button className="routine-action-btn edit" onClick={(e) => { e.stopPropagation(); setEditingRoutine({ ...r }); setShowRoutines(false); }}>
                                                         <Edit3 size={12} />
                                                     </button>
-                                                    <button className="routine-action-btn delete" onClick={(e) => deleteRoutine(r._id, e)}>
+                                                    <button className="routine-action-btn delete" onClick={(e) => deleteRoutine(r._id, r.name, e)}>
                                                         <Trash2 size={12} />
                                                     </button>
                                                 </div>
@@ -830,6 +857,10 @@ const DayPlanner = () => {
                     )}
                 </div>
             </main>
+            <Modal
+                {...modal}
+                onClose={() => setModal(prev => ({ ...prev, isOpen: false }))}
+            />
         </div>
     );
 };

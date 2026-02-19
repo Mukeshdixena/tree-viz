@@ -8,7 +8,7 @@ import JournalEntry from './components/Journal/JournalEntry';
 import NotesManager from './components/Notes/NotesManager';
 import LearningDashboard from './components/Stats/LearningDashboard';
 import DayPlanner from './components/Planner/DayPlanner';
-import HabitTracker from './components/Habits/HabitTracker';
+
 import './App.css';
 
 // Wrapper to handle layout with sidebar
@@ -51,8 +51,8 @@ const MainLayout = ({ isDark, toggleTheme }) => {
           <Route path="/tasks" element={<TaskBoard />} />
           <Route path="/journal" element={<JournalEntry />} />
           <Route path="/planner" element={<DayPlanner />} />
-          <Route path="/habits" element={<HabitTracker />} />
           <Route path="/notes" element={<NotesManager />} />
+
           <Route path="/stats" element={<LearningDashboard />} />
         </Routes>
       </div>

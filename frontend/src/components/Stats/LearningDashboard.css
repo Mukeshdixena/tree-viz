@@ -1,13 +1,16 @@
 /* ============ PROGRESS HUB (Merged Habits + Stats) ============ */
 
 .ld-container {
-    padding: 2rem;
+    padding: 2.5rem 2.5rem 5rem 2.5rem;
     min-height: 100vh;
     background: var(--bg-primary);
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    overflow-y: auto;
+    gap: 2.5rem;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
 /* ── Loading ── */
@@ -120,8 +123,8 @@
 /* ── Main Grid ── */
 .ld-main-grid {
     display: grid;
-    grid-template-columns: 1.6fr 1fr;
-    gap: 1.5rem;
+    grid-template-columns: 1fr 380px;
+    gap: 2rem;
     align-items: start;
 }
 
@@ -137,12 +140,117 @@
     gap: 1.5rem;
 }
 
+/* ── Habit Totals Section ── */
+.ld-habit-totals-section {
+    width: 100%;
+}
+
+.ld-ht-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.ld-ht-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.ld-ht-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.ld-ht-card-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ld-ht-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.ld-ht-card-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.ld-ht-card-main {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+}
+
+.ld-ht-card-val {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.ld-ht-card-unit {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.ld-ht-card-progress-mini {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--bg-tertiary);
+}
+
+.ld-ht-card-bar {
+    height: 100%;
+}
+
 /* ── Cards ── */
 .ld-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 1.5rem;
+    border-radius: 28px;
+    padding: 2.25rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.ld-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
+    opacity: 0.1;
+    pointer-events: none;
+}
+
+.ld-card:hover {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
 }
 
 /* ── Section header ── */
@@ -732,10 +840,85 @@
     left: 2rem;
     opacity: 0;
     transition: opacity 0.2s;
-    background: var(--bg-tertiary);
-    padding: 2px 4px;
-    border-radius: 4px;
+    background: var(--bg-secondary);
+    padding: 4px 6px;
+    border-radius: 8px;
     z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+}
+
+/* ── Bottom Section ── */
+.ld-bottom-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.ld-full-card {
+    grid-column: 1 / -1;
+}
+
+.ld-insight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.ld-insight-item {
+    padding: 1.75rem;
+    background: var(--bg-tertiary);
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    position: relative;
+    transition: transform 0.2s;
+}
+
+.ld-insight-item:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+}
+
+.ld-insight-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ld-insight-value {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, var(--primary), #3b82f6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.ld-insight-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.ld-timeline {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.ld-timeline::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-color);
 }
 
 .ld-ht-habit-cell:hover .ld-ht-actions {

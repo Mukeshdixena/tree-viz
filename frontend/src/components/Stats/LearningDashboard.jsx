@@ -3,11 +3,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Book, Clock, Trophy, Target, Zap, Flame, CheckCircle2,
     ChevronLeft, ChevronRight, Calendar, BarChart2,
-    Star, TrendingUp, BookOpen, Brain, Coffee, Plus, Trash2, Edit3
+    Star, TrendingUp, BookOpen, Brain, Coffee, Plus, Trash2, Edit3,
+    Activity, Shield, PieChart, Layers, ArrowUpRight, ZapOff, Heart
 } from 'lucide-react';
 import { api } from '../../api';
 import { subscribeToUpdates, unsubscribeFromUpdates } from '../../socket';
 import './LearningDashboard.css';
+
+const ICON_MAP = {
+    Zap: Zap,
+    Activity: Activity,
+    Target: Target,
+    Flame: Flame,
+    Clock: Clock,
+    Book: Book,
+    Trophy: Trophy,
+    Star: Star,
+    Brain: Brain,
+    Coffee: Coffee,
+    Heart: Heart,
+};
 
 // ---- Sub-components ----
 
@@ -228,6 +243,7 @@ const LearningDashboard = () => {
     const todayHabitsTotal = habits.length;
     const todayHabitsDone = habits.filter(h => h.logs && h.logs[todayStr] && h.logs[todayStr].length > 0).length;
     const bestStreak = habits.length > 0 ? Math.max(...habits.map(h => calcHabitStreak(h.logs))) : 0;
+    const maxHabitTotal = stats?.habitStats?.length ? Math.max(...stats.habitStats.map(h => h.total), 1) : 1;
 
     if (loading) {
         return (
@@ -263,6 +279,42 @@ const LearningDashboard = () => {
                 <StatCard icon={Clock} title="Study Hours" value={`${stats?.totalHours ?? 0}h`} sub="Total invested" color="#6366f1" delay={0.3} />
                 <StatCard icon={TrendingUp} title="Day Streak" value={`${stats?.streak ?? 0}d`} sub="Journal + tasks" color="#ec4899" delay={0.35} />
             </section>
+
+            {/* ── Habit Totals (All-time) ── */}
+            {stats?.habitStats?.length > 0 && (
+                <section className="ld-habit-totals-section">
+                    <div className="ld-ht-grid">
+                        {stats.habitStats.map((h, i) => {
+                            const Icon = ICON_MAP[h.icon] || Zap;
+                            return (
+                                <motion.div
+                                    key={h._id}
+                                    className="ld-ht-card"
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.4 + (i * 0.05) }}
+                                >
+                                    <div className="ld-ht-card-icon" style={{ background: h.color + '15', color: h.color }}>
+                                        <Icon size={14} />
+                                    </div>
+                                    <div className="ld-ht-card-content">
+                                        <span className="ld-ht-card-label">{h.name}</span>
+                                        <div className="ld-ht-card-main">
+                                            <span className="ld-ht-card-val">{h.total}</span>
+                                            <span className="ld-ht-card-unit">
+                                                {h.trackingType === 'hours' ? 'hrs' : h.trackingType === 'count' ? 'units' : 'times'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="ld-ht-card-progress-mini">
+                                        <div className="ld-ht-card-bar" style={{ background: h.color, width: `${(h.total / maxHabitTotal) * 100}%`, opacity: 0.5 }} />
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
 
             {/* ── Main Grid ── */}
             <div className="ld-main-grid">
@@ -494,6 +546,101 @@ const LearningDashboard = () => {
                         </ul>
                     </motion.section>
                 </div>
+            </div>
+
+            {/* ── Bottom Section: Deep Insights & Timeline ── */}
+            <div className="ld-bottom-section">
+
+                {/* Detailed Analysis */}
+                <motion.section className="ld-card ld-full-card"
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
+                    <div className="ld-section-title" style={{ marginBottom: '2rem' }}>
+                        <Activity size={20} color="var(--primary)" />
+                        <h2>Consistency Analytics</h2>
+                    </div>
+
+                    <div className="ld-insight-grid">
+                        <div className="ld-insight-item">
+                            <span className="ld-insight-label">Productive Focus</span>
+                            <span className="ld-insight-value">{stats?.totalHours > 50 ? 'Elite' : 'Stable'}</span>
+                            <span className="ld-insight-desc">Based on your cumulative {stats?.totalHours || 0} study hours.</span>
+                        </div>
+                        <div className="ld-insight-item">
+                            <span className="ld-insight-label">Peak Performance</span>
+                            <span className="ld-insight-value">
+                                {weekData.sort((a, b) => b.value - a.value)[0]?.day}s
+                            </span>
+                            <span className="ld-insight-desc">You are most consistent during the weekend.</span>
+                        </div>
+                        <div className="ld-insight-item">
+                            <span className="ld-insight-label">Habit Versatility</span>
+                            <span className="ld-insight-value">{(habits.filter(h => h.trackingType !== 'none').length / (habits.length || 1) * 100).toFixed(0)}%</span>
+                            <span className="ld-insight-desc">Percentage of complex/numeric habits vs simple toggles.</span>
+                        </div>
+                        <div className="ld-insight-item">
+                            <span className="ld-insight-label">Goal Velocity</span>
+                            <span className="ld-insight-value">+{stats?.completedGoals > 0 ? (stats.completedGoals / 7).toFixed(1) : 0}</span>
+                            <span className="ld-insight-desc">Tasks completed per day on average this week.</span>
+                        </div>
+                    </div>
+                </motion.section>
+
+                {/* Extended History / Activity Feed */}
+                <motion.section className="ld-card"
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
+                    <div className="ld-section-title" style={{ marginBottom: '1.5rem' }}>
+                        <Layers size={18} color="#ec4899" />
+                        <h2>Detailed Activity Feed</h2>
+                    </div>
+                    <div className="ld-timeline">
+                        {stats?.recentActivity?.length > 0 ? stats.recentActivity.map((a, i) => (
+                            <div key={i} className="ld-activity-item" style={{ marginBottom: '1.25rem' }}>
+                                <div className="ld-activity-dot"
+                                    style={{
+                                        background: a.type === 'task' ? '#6366f1' : a.type === 'journal' ? '#10b981' : '#f59e0b',
+                                        width: '12px', height: '12px', marginTop: '6px'
+                                    }} />
+                                <div className="ld-activity-text">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <strong style={{ fontSize: '0.95rem' }}>{a.title}</strong>
+                                        <ArrowUpRight size={12} color="var(--text-muted)" />
+                                    </div>
+                                    <span style={{ fontSize: '0.78rem' }}>
+                                        {new Date(a.date).toLocaleDateString('en-US', {
+                                            weekday: 'short', month: 'short', day: 'numeric',
+                                            hour: '2-digit', minute: '2-digit'
+                                        })}
+                                    </span>
+                                </div>
+                            </div>
+                        )) : (
+                            <p className="ld-empty">No detailed activity records yet.</p>
+                        )}
+                    </div>
+                </motion.section>
+
+                {/* Mini Visualization / Shield */}
+                <motion.section className="ld-card"
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}>
+                    <div className="ld-section-title" style={{ marginBottom: '1.5rem' }}>
+                        <Shield size={18} color="#10b981" />
+                        <h2>System Health</h2>
+                    </div>
+                    <div style={{ padding: '1rem', textAlign: 'center' }}>
+                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                            <PieChart size={120} color="var(--primary-light)" strokeWidth={1} />
+                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                                <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
+                                    {todayHabitsTotal > 0 ? Math.round((todayHabitsDone / todayHabitsTotal) * 100) : 100}%
+                                </span>
+                            </div>
+                        </div>
+                        <p style={{ marginTop: '1.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                            You've completed <strong>{todayHabitsDone}</strong> of your <strong>{todayHabitsTotal}</strong> habits today.
+                            {todayHabitsDone === todayHabitsTotal ? " Perfect score!" : " Keep pushing to finish the list."}
+                        </p>
+                    </div>
+                </motion.section>
             </div>
             {/* Manual Entry Modal */}
             <AnimatePresence>

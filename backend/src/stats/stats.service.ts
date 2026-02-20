@@ -62,13 +62,32 @@ export class StatsService {
             .sort((a, b) => b.date.getTime() - a.date.getTime())
             .slice(0, 10);
 
+        // Calculate All-time Habit Totals
+        const habitStats = habits.map(habit => {
+            let total = 0;
+            if (habit.logs) {
+                habit.logs.forEach((entries: any[]) => {
+                    entries.forEach(e => total += (e.value || 0));
+                });
+            }
+            return {
+                _id: habit._id,
+                name: habit.name,
+                trackingType: habit.trackingType,
+                total: Math.round(total * 10) / 10,
+                color: habit.color,
+                icon: habit.icon
+            };
+        });
+
         return {
             totalHours: Math.round(totalHours * 10) / 10,
             streak,
             completedGoals,
             activeGoals,
             topicMastery,
-            recentActivity
+            recentActivity,
+            habitStats
         };
     }
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Book, Clock, Trophy, Target, Zap, Flame, CheckCircle2,
-    Circle, ChevronLeft, ChevronRight, Calendar, BarChart2,
+    ChevronLeft, ChevronRight, Calendar, BarChart2,
     Star, TrendingUp, BookOpen, Brain, Coffee, Plus, Trash2
 } from 'lucide-react';
 import { api } from '../../api';
@@ -280,33 +280,69 @@ const LearningDashboard = () => {
                         )}
                     </AnimatePresence>
 
-                    {/* Today's habit toggles */}
-                    <div className="ld-today-habits">
-                        <p className="ld-subsection-label">Today</p>
-                        {habits.length === 0 && <p className="ld-empty">No habits yet. Add one above!</p>}
-                        {habits.map(habit => {
-                            const done = !!(habit.logs && habit.logs[todayStr]);
-                            const streak = calcHabitStreak(habit.logs);
-                            return (
-                                <div key={habit._id} className={`ld-habit-row ${done ? 'done' : ''}`}>
-                                    <button
-                                        className="ld-habit-check"
-                                        style={{ '--hc': habit.color }}
-                                        onClick={() => toggleHabit(habit._id)}
-                                    >
-                                        {done ? <CheckCircle2 size={20} /> : <Circle size={20} />}
-                                    </button>
-                                    <span className="ld-habit-name">{habit.name}</span>
-                                    {streak > 0 && (
-                                        <span className="ld-habit-streak" style={{ color: habit.color }}>
-                                            🔥 {streak}d
-                                        </span>
-                                    )}
-                                    <button className="ld-habit-del" onClick={() => deleteHabit(habit._id)}><Trash2 size={13} /></button>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    {/* 7-day habit table */}
+                    {habits.length === 0 ? (
+                        <p className="ld-empty">No habits yet. Add one above!</p>
+                    ) : (
+                        <div className="ld-habit-table-wrap">
+                            <table className="ld-habit-table">
+                                <thead>
+                                    <tr>
+                                        <th className="ld-ht-habit-col">Habit</th>
+                                        {weekData.map((w, i) => (
+                                            <th key={i} className={`ld-ht-day-col${w.date === todayStr ? ' today' : ''}`}>
+                                                <span className="ld-ht-day-name">{w.day}</span>
+                                                <span className="ld-ht-day-num">{new Date(w.date).getDate()}</span>
+                                            </th>
+                                        ))}
+                                        <th className="ld-ht-streak-col">Streak</th>
+                                        <th className="ld-ht-del-col"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {habits.map(habit => {
+                                        const streak = calcHabitStreak(habit.logs);
+                                        return (
+                                            <tr key={habit._id} className="ld-ht-row">
+                                                <td className="ld-ht-habit-cell">
+                                                    <span className="ld-ht-dot" style={{ background: habit.color }} />
+                                                    <span className="ld-ht-name">{habit.name}</span>
+                                                </td>
+                                                {weekData.map((w, i) => {
+                                                    const done = !!(habit.logs && habit.logs[w.date]);
+                                                    const isToday = w.date === todayStr;
+                                                    return (
+                                                        <td
+                                                            key={i}
+                                                            className={`ld-ht-cell-td${isToday ? ' today' : ''}`}
+                                                            onClick={() => isToday && toggleHabit(habit._id)}
+                                                            title={`${habit.name} – ${w.date}`}
+                                                        >
+                                                            <div
+                                                                className={`ld-ht-cell${done ? ' done' : ''}${isToday ? ' clickable' : ''}`}
+                                                                style={done ? { background: habit.color + '25', borderColor: habit.color } : {}}
+                                                            >
+                                                                {done && <CheckCircle2 size={12} style={{ color: habit.color }} />}
+                                                            </div>
+                                                        </td>
+                                                    );
+                                                })}
+                                                <td className="ld-ht-streak-cell">
+                                                    {streak > 0
+                                                        ? <span style={{ color: habit.color, fontWeight: 700, fontSize: '0.78rem' }}>🔥{streak}d</span>
+                                                        : <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>—</span>
+                                                    }
+                                                </td>
+                                                <td className="ld-ht-del-cell">
+                                                    <button className="ld-habit-del" onClick={() => deleteHabit(habit._id)}><Trash2 size={12} /></button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
 
                     {/* Calendar grid */}
                     <div className="ld-habit-calendar">

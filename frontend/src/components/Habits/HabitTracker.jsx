@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, CheckCircle2, Circle, ChevronLeft, ChevronRight, Plus, Trash2, Zap, Edit3, Heart, Target, Flame } from 'lucide-react';
+import {
+    Calendar, CheckCircle2, ChevronLeft, ChevronRight,
+    Plus, Trash2, Zap, Flame
+} from 'lucide-react';
 import { api } from '../../api';
 import './HabitTracker.css';
+
+const COLORS = ['#14b8a6', '#3b82f6', '#8b5cf6', '#ef4444', '#f59e0b', '#10b981'];
 
 const HabitTracker = () => {
     const [habits, setHabits] = useState([]);
@@ -10,6 +15,7 @@ const HabitTracker = () => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [showAddModal, setShowAddModal] = useState(false);
     const [newHabit, setNewHabit] = useState({ name: '', icon: 'Zap', color: '#14b8a6' });
+    const tableBodyRef = useRef(null);
 
     const fetchHabits = async () => {
         setLoading(true);
@@ -17,15 +23,13 @@ const HabitTracker = () => {
             const data = await api.get('/habits');
             if (data) setHabits(data);
         } catch (error) {
-            console.error("Error fetching habits:", error);
+            console.error('Error fetching habits:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchHabits();
-    }, []);
+    useEffect(() => { fetchHabits(); }, []);
 
     const handleAddHabit = async () => {
         if (!newHabit.name.trim()) return;
@@ -35,7 +39,7 @@ const HabitTracker = () => {
             setShowAddModal(false);
             fetchHabits();
         } catch (error) {
-            console.error("Error adding habit:", error);
+            console.error('Error adding habit:', error);
         }
     };
 
@@ -44,160 +48,274 @@ const HabitTracker = () => {
             await api.post(`/habits/${habitId}/toggle`, { date: dateStr });
             fetchHabits();
         } catch (error) {
-            console.error("Error toggling habit:", error);
+            console.error('Error toggling habit:', error);
         }
     };
 
     const deleteHabit = async (id) => {
-        if (!window.confirm("Delete this habit and all its history?")) return;
+        if (!window.confirm('Delete this habit and all its history?')) return;
         try {
             await api.delete(`/habits/${id}`);
             fetchHabits();
         } catch (error) {
-            console.error("Error deleting habit:", error);
+            console.error('Error deleting habit:', error);
         }
     };
 
-    const generateMonthDays = () => {
+    const changeMonth = (offset) => {
+        const d = new Date(currentMonth);
+        d.setMonth(d.getMonth() + offset);
+        setCurrentMonth(d);
+    };
+
+    // Build array of Date objects for every day in the current month
+    const getMonthDays = () => {
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
-        const firstDayOfMonth = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        const days = [];
-        for (let i = 0; i < firstDayOfMonth; i++) days.push(null);
-        for (let d = 1; d <= daysInMonth; d++) days.push(new Date(year, month, d));
-        return days;
+        const count = new Date(year, month + 1, 0).getDate();
+        return Array.from({ length: count }, (_, i) => new Date(year, month, i + 1));
     };
 
-    const changeMonth = (offset) => {
-        const newMonth = new Date(currentMonth);
-        newMonth.setMonth(newMonth.getMonth() + offset);
-        setCurrentMonth(newMonth);
+    const calcStreak = (logs) => {
+        if (!logs) return 0;
+        let streak = 0;
+        const today = new Date();
+        for (let i = 0; i < 365; i++) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            if (logs[d.toISOString().split('T')[0]]) streak++;
+            else break;
+        }
+        return streak;
     };
 
-    if (loading) return <div className="p-8">Loading your habits...</div>;
-
-    const days = generateMonthDays();
     const todayStr = new Date().toISOString().split('T')[0];
+    const monthDays = getMonthDays();
+    const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+    // Summary row: how many habits done per day
+    const dayTotals = monthDays.map(d => {
+        const ds = d.toISOString().split('T')[0];
+        return habits.filter(h => h.logs && h.logs[ds]).length;
+    });
+
+    if (loading) {
+        return (
+            <div className="ht-loading">
+                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
+                    <Zap size={28} color="var(--primary)" />
+                </motion.div>
+                <span>Loading habits…</span>
+            </div>
+        );
+    }
 
     return (
-        <div className="habit-tracker-container">
-            <header className="habit-header">
-                <div className="header-left">
-                    <h1>Habit Tracker</h1>
-                    <div className="month-nav">
-                        <button onClick={() => changeMonth(-1)} className="nav-btn"><ChevronLeft size={20} /></button>
-                        <span className="current-month">
-                            <Calendar size={18} />
+        <div className="ht-container">
+            {/* Header */}
+            <header className="ht-header">
+                <div className="ht-header-left">
+                    <Flame size={22} color="#f59e0b" />
+                    <div>
+                        <h1>Habit Tracker</h1>
+                        <p>{habits.length} habit{habits.length !== 1 ? 's' : ''} tracked</p>
+                    </div>
+                </div>
+                <div className="ht-header-right">
+                    <div className="ht-month-nav">
+                        <button className="ht-nav-btn" onClick={() => changeMonth(-1)}><ChevronLeft size={16} /></button>
+                        <span>
+                            <Calendar size={14} />
                             {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                         </span>
-                        <button onClick={() => changeMonth(1)} className="nav-btn"><ChevronRight size={20} /></button>
+                        <button className="ht-nav-btn" onClick={() => changeMonth(1)}><ChevronRight size={16} /></button>
                     </div>
+                    <button className="ht-add-btn" onClick={() => setShowAddModal(true)}>
+                        <Plus size={16} /> Add Habit
+                    </button>
                 </div>
-                <button className="add-habit-btn" onClick={() => setShowAddModal(true)}>
-                    <Plus size={18} /> Add Habit
-                </button>
             </header>
 
-            <main className="habit-content">
-                <div className="habits-sidebar">
-                    <h3>Your Habits</h3>
-                    <div className="habits-list">
-                        {habits.map(habit => (
-                            <div key={habit._id} className="habit-card">
-                                <div className="habit-info">
-                                    <div className="habit-icon" style={{ backgroundColor: habit.color + '20', color: habit.color }}>
-                                        <Zap size={16} />
-                                    </div>
-                                    <div className="habit-details">
-                                        <span className="habit-name">{habit.name}</span>
-                                        <span className="habit-streak">
-                                            <Flame size={12} /> {Object.keys(habit.logs).length} days total
-                                        </span>
-                                    </div>
-                                </div>
-                                <button className="delete-mini" onClick={() => deleteHabit(habit._id)}>
-                                    <Trash2 size={14} />
-                                </button>
-                            </div>
-                        ))}
+            {/* Table wrapper */}
+            <div className="ht-table-wrapper">
+                {habits.length === 0 ? (
+                    <div className="ht-empty">
+                        <Zap size={36} color="var(--primary)" opacity={0.4} />
+                        <p>No habits yet. Click <strong>Add Habit</strong> to get started!</p>
                     </div>
-                </div>
+                ) : (
+                    <table className="ht-table">
+                        <thead>
+                            <tr>
+                                <th className="ht-th-habit">Habit</th>
+                                {monthDays.map(d => {
+                                    const ds = d.toISOString().split('T')[0];
+                                    const isToday = ds === todayStr;
+                                    return (
+                                        <th
+                                            key={ds}
+                                            className={`ht-th-day${isToday ? ' today' : ''}`}
+                                            title={d.toDateString()}
+                                        >
+                                            <span className="ht-day-num">{d.getDate()}</span>
+                                            <span className="ht-day-name">{dayNames[d.getDay()]}</span>
+                                        </th>
+                                    );
+                                })}
+                                <th className="ht-th-streak">Streak</th>
+                                <th className="ht-th-total">Done</th>
+                                <th className="ht-th-del"></th>
+                            </tr>
+                        </thead>
+                        <tbody ref={tableBodyRef}>
+                            {habits.map((habit, hIdx) => {
+                                const streak = calcStreak(habit.logs);
+                                const monthTotal = monthDays.filter(d => habit.logs && habit.logs[d.toISOString().split('T')[0]]).length;
+                                return (
+                                    <motion.tr
+                                        key={habit._id}
+                                        className="ht-row"
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: hIdx * 0.04 }}
+                                    >
+                                        {/* Habit name cell */}
+                                        <td className="ht-td-habit">
+                                            <span
+                                                className="ht-habit-dot"
+                                                style={{ background: habit.color }}
+                                            />
+                                            <span className="ht-habit-name">{habit.name}</span>
+                                        </td>
 
-                <div className="habit-view-area">
-                    <div className="habit-calendar-grid">
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                            <div key={day} className="calendar-weekday">{day}</div>
-                        ))}
-                        {days.map((date, idx) => {
-                            if (!date) return <div key={idx} className="calendar-day empty"></div>;
-                            const dStr = date.toISOString().split('T')[0];
-                            const isToday = dStr === todayStr;
+                                        {/* Day cells */}
+                                        {monthDays.map(d => {
+                                            const ds = d.toISOString().split('T')[0];
+                                            const done = !!(habit.logs && habit.logs[ds]);
+                                            const isToday = ds === todayStr;
+                                            const isFuture = d > new Date();
+                                            return (
+                                                <td
+                                                    key={ds}
+                                                    className={`ht-td-day${isToday ? ' today' : ''}${isFuture ? ' future' : ''}`}
+                                                    onClick={() => !isFuture && toggleHabit(habit._id, ds)}
+                                                    title={`${habit.name} – ${d.toDateString()}`}
+                                                >
+                                                    <div
+                                                        className={`ht-cell${done ? ' done' : ''}`}
+                                                        style={done ? { background: habit.color + '22', borderColor: habit.color } : {}}
+                                                    >
+                                                        {done && (
+                                                            <CheckCircle2
+                                                                size={14}
+                                                                style={{ color: habit.color }}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            );
+                                        })}
 
-                            return (
-                                <div key={idx} className={`calendar-day ${isToday ? 'today' : ''}`}>
-                                    <span className="day-number">{date.getDate()}</span>
-                                    <div className="day-habits">
-                                        {habits.map(habit => (
-                                            <div
-                                                key={habit._id}
-                                                className={`habit-toggle-dot ${habit.logs[dStr] ? 'done' : ''}`}
-                                                style={{ '--habit-color': habit.color }}
-                                                title={`${habit.name}: ${habit.logs[dStr] ? 'Done' : 'Pending'}`}
-                                            >
-                                                {habit.logs[dStr] && <CheckCircle2 size={10} />}
-                                            </div>
+                                        {/* Streak */}
+                                        <td className="ht-td-streak">
+                                            {streak > 0 ? (
+                                                <span className="ht-streak-badge" style={{ color: habit.color }}>
+                                                    🔥 {streak}d
+                                                </span>
+                                            ) : <span className="ht-streak-zero">—</span>}
+                                        </td>
+
+                                        {/* Month total */}
+                                        <td className="ht-td-total">
+                                            <span className="ht-month-total" style={{ color: habit.color }}>
+                                                {monthTotal}/{monthDays.length}
+                                            </span>
+                                        </td>
+
+                                        {/* Delete */}
+                                        <td className="ht-td-del">
+                                            <button className="ht-del-btn" onClick={() => deleteHabit(habit._id)}>
+                                                <Trash2 size={13} />
+                                            </button>
+                                        </td>
+                                    </motion.tr>
+                                );
+                            })}
+                        </tbody>
+                        {/* Summary footer */}
+                        <tfoot>
+                            <tr className="ht-footer-row">
+                                <td className="ht-td-habit ht-footer-label">Daily total</td>
+                                {dayTotals.map((count, i) => {
+                                    const pct = habits.length > 0 ? count / habits.length : 0;
+                                    const ds = monthDays[i].toISOString().split('T')[0];
+                                    const isToday = ds === todayStr;
+                                    const bg = pct === 0 ? 'transparent'
+                                        : pct < 0.34 ? '#14b8a630'
+                                            : pct < 0.67 ? '#14b8a660'
+                                                : '#14b8a6aa';
+                                    return (
+                                        <td
+                                            key={i}
+                                            className={`ht-td-day ht-footer-cell${isToday ? ' today' : ''}`}
+                                            style={{ background: bg }}
+                                            title={`${count}/${habits.length} habits`}
+                                        >
+                                            {count > 0 && (
+                                                <span className="ht-footer-count">{count}</span>
+                                            )}
+                                        </td>
+                                    );
+                                })}
+                                <td colSpan={3} className="ht-footer-end">
+                                    <div className="ht-legend">
+                                        <span>Less</span>
+                                        {['transparent', '#14b8a630', '#14b8a660', '#14b8a6aa'].map((c, i) => (
+                                            <div key={i} className="ht-legend-dot"
+                                                style={{ background: c === 'transparent' ? 'var(--bg-tertiary)' : c }} />
                                         ))}
+                                        <span>More</span>
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            </main>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                )}
+            </div>
 
+            {/* Add Habit Modal */}
             <AnimatePresence>
                 {showAddModal && (
-                    <motion.div
-                        className="modal-overlay"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                    >
-                        <motion.div
-                            className="habit-modal"
-                            initial={{ scale: 0.9 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0.9 }}
-                        >
-                            <h3>Create New Habit</h3>
-                            <div className="form-group">
-                                <label>Habit Name</label>
+                    <motion.div className="ht-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <motion.div className="ht-modal" initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9 }}>
+                            <h3>New Habit</h3>
+                            <div className="ht-form-group">
+                                <label>Name</label>
                                 <input
                                     type="text"
                                     placeholder="e.g. Morning Run"
                                     value={newHabit.name}
                                     onChange={e => setNewHabit({ ...newHabit, name: e.target.value })}
+                                    onKeyDown={e => e.key === 'Enter' && handleAddHabit()}
                                     autoFocus
                                 />
                             </div>
-                            <div className="form-group">
-                                <label>Color Theme</label>
-                                <div className="color-presets">
-                                    {['#14b8a6', '#3b82f6', '#8b5cf6', '#ef4444', '#f59e0b', '#10b981'].map(c => (
+                            <div className="ht-form-group">
+                                <label>Color</label>
+                                <div className="ht-color-row">
+                                    {COLORS.map(c => (
                                         <div
                                             key={c}
-                                            className={`color-swatch ${newHabit.color === c ? 'active' : ''}`}
-                                            style={{ backgroundColor: c }}
+                                            className={`ht-color-dot${newHabit.color === c ? ' active' : ''}`}
+                                            style={{ background: c }}
                                             onClick={() => setNewHabit({ ...newHabit, color: c })}
                                         />
                                     ))}
                                 </div>
                             </div>
-                            <div className="modal-actions">
-                                <button className="cancel-btn" onClick={() => setShowAddModal(false)}>Cancel</button>
-                                <button className="save-btn" onClick={handleAddHabit}>Create Habit</button>
+                            <div className="ht-modal-actions">
+                                <button className="ht-cancel-btn" onClick={() => setShowAddModal(false)}>Cancel</button>
+                                <button className="ht-save-btn" onClick={handleAddHabit}>Create Habit</button>
                             </div>
                         </motion.div>
                     </motion.div>

@@ -607,3 +607,153 @@
     text-align: center;
     padding: 1rem 0;
 }
+
+/* ── Mini Habit Table (7-day view inside Progress Hub) ── */
+.ld-habit-table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+
+.ld-habit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.ld-habit-table thead tr {
+    background: var(--bg-tertiary);
+}
+
+.ld-ht-habit-col {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    min-width: 130px;
+    border-bottom: 1.5px solid var(--border-color);
+}
+
+.ld-ht-day-col {
+    text-align: center;
+    padding: 0.35rem 0.25rem;
+    min-width: 34px;
+    border-bottom: 1.5px solid var(--border-color);
+}
+
+.ld-ht-day-col.today {
+    background: var(--primary-light, #14b8a615);
+}
+
+.ld-ht-day-name {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.ld-ht-day-num {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.ld-ht-day-col.today .ld-ht-day-num {
+    color: var(--primary);
+}
+
+.ld-ht-streak-col,
+.ld-ht-del-col {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    border-bottom: 1.5px solid var(--border-color);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.ld-ht-row {
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.15s;
+}
+
+.ld-ht-row:last-child {
+    border-bottom: none;
+}
+
+.ld-ht-row:hover {
+    background: var(--bg-tertiary);
+}
+
+.ld-ht-habit-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+}
+
+.ld-ht-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.ld-ht-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.83rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+}
+
+.ld-ht-cell-td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.2rem 0.1rem;
+    cursor: default;
+}
+
+.ld-ht-cell-td.today {
+    background: var(--primary-light, #14b8a610);
+    cursor: pointer;
+}
+
+.ld-ht-cell {
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    transition: all 0.15s;
+}
+
+.ld-ht-cell.clickable:not(.done):hover {
+    border-color: var(--primary);
+    background: var(--primary-light, #14b8a615);
+}
+
+.ld-ht-streak-cell {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.4rem 0.4rem;
+}
+
+.ld-ht-del-cell {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.4rem 0.4rem;
+}

@@ -58,6 +58,7 @@ const DayPlanner = () => {
         type: 'alert',
         onConfirm: () => { },
     });
+    const [manualHabitLog, setManualHabitLog] = useState(null); // { habitId, name, value, date }
 
     const showModal = (config) => {
         setModal({
@@ -159,13 +160,43 @@ const DayPlanner = () => {
         }
     };
 
-    const toggleHabit = async (habitId) => {
+    const toggleHabit = async (habit) => {
         try {
-            await api.post(`/habits/${habitId}/toggle`, { date: selectedDate });
+            if (habit.trackingType === 'none') {
+                await api.post(`/habits/${habit._id}/toggle`, { date: selectedDate });
+            } else {
+                const increment = habit.trackingType === 'hours' ? 0.5 : 1;
+                await api.post(`/habits/${habit._id}/progress`, { date: selectedDate, value: increment });
+            }
             fetchHabits();
         } catch (error) {
             console.error("Error toggling habit:", error);
         }
+    };
+
+    const logHabitProgress = async (habitId, value) => {
+        try {
+            await api.post(`/habits/${habitId}/progress`, { date: selectedDate, value });
+            fetchHabits();
+        } catch (error) {
+            console.error("Error logging habit progress:", error);
+        }
+    };
+
+    const setHabitValue = async (habitId, value) => {
+        try {
+            await api.post(`/habits/${habitId}/set-progress`, { date: selectedDate, value });
+            setManualHabitLog(null);
+            fetchHabits();
+        } catch (error) {
+            console.error("Error setting habit value:", error);
+        }
+    };
+
+    const getHabitDayTotal = (logs, dateStr) => {
+        const entries = logs?.[dateStr];
+        if (!entries || !Array.isArray(entries)) return 0;
+        return entries.reduce((acc, curr) => acc + curr.value, 0);
     };
 
     const toggleBlockStatus = (index) => {
@@ -644,20 +675,58 @@ const DayPlanner = () => {
                         </div>
                         <div className="habits-chips-list">
                             {habits.map(habit => {
-                                const isDone = habit.logs[selectedDate];
+                                const dayTotal = getHabitDayTotal(habit.logs, selectedDate);
+                                const isDone = dayTotal > 0;
                                 return (
-                                    <button
-                                        key={habit._id}
-                                        className={`habit-chip ${isDone ? 'done' : ''}`}
-                                        style={{ '--habit-color': habit.color, '--habit-bg': habit.color + '20' }}
-                                        onClick={() => toggleHabit(habit._id)}
-                                    >
-                                        <div className="habit-icon-mini">
-                                            <Zap size={14} />
-                                        </div>
-                                        <span className="habit-name-mini">{habit.name}</span>
-                                        {isDone ? <CheckCircle2 size={16} /> : <Circle size={16} />}
-                                    </button>
+                                    <div key={habit._id} className="habit-chip-container">
+                                        <button
+                                            className={`habit-chip ${isDone ? 'done' : ''}`}
+                                            style={{ '--habit-color': habit.color, '--habit-bg': habit.color + '20' }}
+                                            onClick={() => toggleHabit(habit)}
+                                        >
+                                            <div className="habit-icon-mini">
+                                                <Zap size={14} />
+                                            </div>
+                                            <div className="habit-info-mini">
+                                                <span className="habit-name-mini">{habit.name}</span>
+                                                {habit.trackingType !== 'none' && (
+                                                    <span className="habit-progress-mini">
+                                                        {dayTotal}{habit.trackingType === 'hours' ? 'h' : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {habit.trackingType === 'none' && (isDone ? <CheckCircle2 size={16} /> : <Circle size={16} />)}
+                                            {habit.trackingType !== 'none' && (
+                                                <div
+                                                    className="habit-edit-val-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setManualHabitLog({ habitId: habit._id, name: habit.name, value: dayTotal, date: selectedDate });
+                                                    }}
+                                                >
+                                                    <Edit3 size={14} />
+                                                </div>
+                                            )}
+                                        </button>
+
+                                        {habit.trackingType !== 'none' && (
+                                            <div className="habit-quick-actions">
+                                                {habit.trackingType === 'count' ? (
+                                                    <div className="quick-btn-group">
+                                                        <button onClick={() => logHabitProgress(habit._id, 1)}>+1</button>
+                                                        <button onClick={() => logHabitProgress(habit._id, 5)}>+5</button>
+                                                        <button className="reset-btn" onClick={() => api.post(`/habits/${habit._id}/toggle`, { date: selectedDate }).then(fetchHabits)} title="Reset Today">×</button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="quick-btn-group">
+                                                        <button onClick={() => logHabitProgress(habit._id, 0.5)}>+30m</button>
+                                                        <button onClick={() => logHabitProgress(habit._id, 1)}>+1h</button>
+                                                        <button className="reset-btn" onClick={() => api.post(`/habits/${habit._id}/toggle`, { date: selectedDate }).then(fetchHabits)} title="Reset Today">×</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 );
                             })}
                             {habits.length === 0 && <span className="no-habits-text">No habits tracked yet. Add some in the Habit Tracker!</span>}
@@ -857,6 +926,43 @@ const DayPlanner = () => {
                     )}
                 </div>
             </main>
+            {/* Manual Habit Log Modal */}
+            <AnimatePresence>
+                {manualHabitLog && (
+                    <div className="modal-overlay">
+                        <div className="routine-modal" style={{ maxWidth: '380px' }}>
+                            <div className="modal-header">
+                                <h3>Correct Progress</h3>
+                                <button className="close-modal-btn" onClick={() => setManualHabitLog(null)}>×</button>
+                            </div>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                                Set total for <strong>{manualHabitLog.name}</strong> on {selectedDate}
+                            </p>
+                            <div className="form-group">
+                                <label>Actual Value</label>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        className="modal-input"
+                                        value={manualHabitLog.value}
+                                        onChange={(e) => setManualHabitLog({ ...manualHabitLog, value: e.target.value })}
+                                        autoFocus
+                                    />
+                                    <button
+                                        className="save-planner-btn"
+                                        style={{ padding: '0.5rem' }}
+                                        onClick={() => setHabitValue(manualHabitLog.habitId, parseFloat(manualHabitLog.value))}
+                                    >
+                                        <CheckCircle2 size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             <Modal
                 {...modal}
                 onClose={() => setModal(prev => ({ ...prev, isOpen: false }))}

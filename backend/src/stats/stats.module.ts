@@ -5,6 +5,7 @@ import { StatsController } from './stats.controller';
 import { Journal, JournalSchema } from '../journal/schemas/journal.schema';
 import { Task, TaskSchema } from '../task/schemas/task.schema';
 import { Tree, TreeSchema } from '../tree/schemas/tree.schema';
+import { Habit, HabitSchema } from '../habit/schemas/habit.schema';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { Tree, TreeSchema } from '../tree/schemas/tree.schema';
       { name: Journal.name, schema: JournalSchema },
       { name: Task.name, schema: TaskSchema },
       { name: Tree.name, schema: TreeSchema },
+      { name: Habit.name, schema: HabitSchema },
     ]),
   ],
   controllers: [StatsController],

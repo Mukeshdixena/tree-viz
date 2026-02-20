@@ -43,12 +43,44 @@ export class HabitService {
         if (!habit) return null;
 
         const current = habit.logs.get(date);
-        if (current) {
+        if (current && current.length > 0) {
             habit.logs.delete(date);
         } else {
-            habit.logs.set(date, true);
+            habit.logs.set(date, [{ value: 1, timestamp: new Date() }]);
         }
 
+        habit.markModified('logs');
+        return habit.save();
+    }
+
+    async logProgress(userId: string, habitId: string, date: string, value: number): Promise<Habit> {
+        const habit = await this.habitModel.findOne({
+            _id: new Types.ObjectId(habitId),
+            userId: new Types.ObjectId(userId)
+        });
+
+        if (!habit) return null;
+
+        const current = habit.logs.get(date) || [];
+        current.push({ value, timestamp: new Date() });
+        habit.logs.set(date, current);
+
+        habit.markModified('logs');
+        return habit.save();
+    }
+
+    async setProgress(userId: string, habitId: string, date: string, value: number): Promise<Habit> {
+        const habit = await this.habitModel.findOne({
+            _id: new Types.ObjectId(habitId),
+            userId: new Types.ObjectId(userId)
+        });
+
+        if (!habit) return null;
+
+        // For none/boolean it would just be a single entry
+        habit.logs.set(date, [{ value, timestamp: new Date() }]);
+
+        habit.markModified('logs');
         return habit.save();
     }
 }

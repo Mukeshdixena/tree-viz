@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { Journal } from '../journal/schemas/journal.schema';
 import { Task } from '../task/schemas/task.schema';
 import { Tree } from '../tree/schemas/tree.schema';
+import { Habit } from '../habit/schemas/habit.schema';
 
 @Injectable()
 export class StatsService {
@@ -11,6 +12,7 @@ export class StatsService {
         @InjectModel(Journal.name) private journalModel: Model<Journal>,
         @InjectModel(Task.name) private taskModel: Model<Task>,
         @InjectModel(Tree.name) private treeModel: Model<Tree>,
+        @InjectModel(Habit.name) private habitModel: Model<Habit>,
     ) { }
 
     async getDashboardStats(userId: string) {
@@ -18,9 +20,20 @@ export class StatsService {
         const tasks = await this.taskModel.find({ userId: userObjId }).exec();
         const trees = await this.treeModel.find({ userId: userObjId }).exec();
         const journals = await this.journalModel.find({ userId: userObjId }).exec();
+        const habits = await this.habitModel.find({ userId: userObjId }).exec();
 
         const completedGoals = tasks.filter(t => t.status === 'done').length;
         const activeGoals = tasks.filter(t => t.status !== 'done').length;
+
+        // Calculate hours from tasks and habits (where trackingType is hours)
+        let totalHours = 0;
+        // From tasks (placeholder logic or add field if exists)
+        // From habits
+        habits.filter(h => h.trackingType === 'hours').forEach(h => {
+            h.logs.forEach((entries: any[]) => {
+                entries.forEach(e => totalHours += (e.value || 0));
+            });
+        });
 
         // Calculate Topic Mastery
         const topicMastery = trees.map(tree => {
@@ -37,20 +50,20 @@ export class StatsService {
         // Recent Activity (Mixed)
         const recentTasks = tasks
             .sort((a, b) => (b as any).updatedAt - (a as any).updatedAt)
-            .slice(0, 2)
+            .slice(0, 3)
             .map(t => ({ type: 'task', title: `Task: ${t.title}`, date: (t as any).updatedAt }));
 
         const recentJournals = journals
             .sort((a, b) => (b as any).updatedAt - (a as any).updatedAt)
-            .slice(0, 2)
+            .slice(0, 3)
             .map(j => ({ type: 'journal', title: `Journal: ${j.title}`, date: (j as any).updatedAt }));
 
         const recentActivity = [...recentTasks, ...recentJournals]
-            .sort((a, b) => b.date - a.date)
-            .slice(0, 5);
+            .sort((a, b) => b.date.getTime() - a.date.getTime())
+            .slice(0, 10);
 
         return {
-            totalHours: 0, // Placeholder
+            totalHours: Math.round(totalHours * 10) / 10,
             streak,
             completedGoals,
             activeGoals,

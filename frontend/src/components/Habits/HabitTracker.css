@@ -269,6 +269,38 @@
     max-width: 130px;
 }
 
+.ht-habit-actions {
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.ht-td-habit:hover .ht-habit-actions {
+    opacity: 1;
+}
+
+.ht-row-action-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.25rem;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ht-row-action-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--primary);
+}
+
+.ht-row-action-btn.delete:hover {
+    color: #ef4444;
+}
+
 /* Day cells */
 .ht-td-day {
     text-align: center;
@@ -520,6 +552,28 @@
 
 .ht-cancel-btn:hover {
     background: var(--bg-tertiary);
+}
+
+.ht-cell-value {
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.ht-select {
+    background: var(--bg-tertiary);
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    outline: none;
+    width: 100%;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.ht-select:focus {
+    border-color: var(--primary);
 }
 
 .ht-save-btn {

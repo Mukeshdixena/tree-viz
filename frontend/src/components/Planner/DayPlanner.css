@@ -1042,6 +1042,14 @@ body.dark-mode .time-block.completed {
     align-items: center;
 }
 
+.habit-chip-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    align-items: center;
+    position: relative;
+}
+
 .habit-chip {
     display: flex;
     align-items: center;
@@ -1055,10 +1063,109 @@ body.dark-mode .time-block.completed {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 140px;
+}
+
+.habit-info-mini {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.1;
+    flex: 1;
+}
+
+.habit-edit-val-btn {
+    opacity: 0.3;
+    padding: 2px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.habit-chip:hover .habit-edit-val-btn {
+    opacity: 1;
+}
+
+.habit-edit-val-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.habit-progress-mini {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    font-weight: 800;
+    color: var(--habit-color);
+}
+
+.habit-plus-icon {
+    opacity: 0.4;
+    transition: opacity 0.2s;
+}
+
+.habit-chip:hover .habit-plus-icon {
+    opacity: 1;
+}
+
+.habit-quick-actions {
+    display: flex;
+    gap: 0.3rem;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: absolute;
+    bottom: -28px;
+    z-index: 10;
+}
+
+.habit-chip-container:hover .habit-quick-actions {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.quick-btn-group {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-secondary);
+    padding: 2px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+.quick-btn-group button {
+    background: transparent;
+    border: none;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.quick-btn-group button:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.quick-btn-group .reset-btn {
+    border-left: 1px solid var(--border-color);
+    color: #ef4444;
+    font-size: 0.9rem;
+    padding: 0 6px;
+}
+
+.quick-btn-group .reset-btn:hover {
+    background: #fee2e2;
+    color: #ef4444;
 }
 
 .habit-chip:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     border-color: var(--habit-color);
     background: var(--habit-bg);
     color: var(--habit-color);

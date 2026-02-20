@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Book, Clock, Trophy, Target, Zap, Flame, CheckCircle2,
     ChevronLeft, ChevronRight, Calendar, BarChart2,
-    Star, TrendingUp, BookOpen, Brain, Coffee, Plus, Trash2
+    Star, TrendingUp, BookOpen, Brain, Coffee, Plus, Trash2, Edit3
 } from 'lucide-react';
 import { api } from '../../api';
 import { subscribeToUpdates, unsubscribeFromUpdates } from '../../socket';
@@ -81,7 +81,9 @@ const LearningDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [showAddHabit, setShowAddHabit] = useState(false);
-    const [newHabit, setNewHabit] = useState({ name: '', color: '#14b8a6' });
+    const [newHabit, setNewHabit] = useState({ name: '', color: '#14b8a6', trackingType: 'none' });
+    const [editingHabit, setEditingHabit] = useState(null);
+    const [manualEntry, setManualEntry] = useState(null); // { habitId, name, value, date }
 
     const COLORS = ['#14b8a6', '#3b82f6', '#8b5cf6', '#ef4444', '#f59e0b', '#10b981'];
     const DONUT_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f43f5e', '#f59e0b', '#14b8a6'];
@@ -109,8 +111,16 @@ const LearningDashboard = () => {
 
     const toggleHabit = async (habitId) => {
         const today = new Date().toISOString().split('T')[0];
+        const habit = habits.find(h => h._id === habitId);
+        if (!habit) return;
+
         try {
-            await api.post(`/habits/${habitId}/toggle`, { date: today });
+            if (habit.trackingType === 'none') {
+                await api.post(`/habits/${habitId}/toggle`, { date: today });
+            } else {
+                const dayTotal = (habit.logs?.[today] || []).reduce((acc, c) => acc + c.value, 0);
+                setManualEntry({ habitId, name: habit.name, value: dayTotal, date: today });
+            }
             fetchAll();
         } catch (err) {
             console.error('Error toggling habit:', err);
@@ -120,13 +130,38 @@ const LearningDashboard = () => {
     const addHabit = async () => {
         if (!newHabit.name.trim()) return;
         try {
-            await api.post('/habits', { ...newHabit, icon: 'Zap' });
-            setNewHabit({ name: '', color: '#14b8a6' });
+            if (editingHabit) {
+                await api.put(`/habits/${editingHabit._id}`, newHabit);
+            } else {
+                await api.post('/habits', { ...newHabit, icon: 'Zap' });
+            }
+            setNewHabit({ name: '', color: '#14b8a6', trackingType: 'none' });
+            setEditingHabit(null);
             setShowAddHabit(false);
             fetchAll();
         } catch (err) {
-            console.error('Error adding habit:', err);
+            console.error('Error adding/editing habit:', err);
         }
+    };
+
+    const handleSetProgress = async () => {
+        if (!manualEntry) return;
+        try {
+            await api.post(`/habits/${manualEntry.habitId}/set-progress`, {
+                date: manualEntry.date,
+                value: parseFloat(manualEntry.value)
+            });
+            setManualEntry(null);
+            fetchAll();
+        } catch (err) {
+            console.error('Error setting manual progress:', err);
+        }
+    };
+
+    const openEdit = (habit) => {
+        setEditingHabit(habit);
+        setNewHabit({ name: habit.name, color: habit.color, trackingType: habit.trackingType });
+        setShowAddHabit(true);
     };
 
     const deleteHabit = async (id) => {
@@ -164,7 +199,8 @@ const LearningDashboard = () => {
             const d = new Date();
             d.setDate(today.getDate() - (6 - i));
             const dStr = d.toISOString().split('T')[0];
-            const completedHabits = habits.filter(h => h.logs && h.logs[dStr]).length;
+            const logEntries = habits.filter(h => h.logs && h.logs[dStr] && h.logs[dStr].length > 0);
+            const completedHabits = logEntries.length;
             return { day: days[d.getDay()], value: completedHabits, date: dStr };
         });
     };
@@ -183,14 +219,14 @@ const LearningDashboard = () => {
             const d = new Date(today);
             d.setDate(today.getDate() - i);
             const dStr = d.toISOString().split('T')[0];
-            if (logs[dStr]) streak++;
+            if (logs[dStr] && Array.isArray(logs[dStr]) && logs[dStr].length > 0) streak++;
             else break;
         }
         return streak;
     };
 
     const todayHabitsTotal = habits.length;
-    const todayHabitsDone = habits.filter(h => h.logs && h.logs[todayStr]).length;
+    const todayHabitsDone = habits.filter(h => h.logs && h.logs[todayStr] && h.logs[todayStr].length > 0).length;
     const bestStreak = habits.length > 0 ? Math.max(...habits.map(h => calcHabitStreak(h.logs))) : 0;
 
     if (loading) {
@@ -265,16 +301,27 @@ const LearningDashboard = () => {
                                     autoFocus
                                     className="ld-habit-input"
                                 />
-                                <div className="ld-color-row">
-                                    {COLORS.map(c => (
-                                        <div key={c} className={`ld-color-dot ${newHabit.color === c ? 'active' : ''}`}
-                                            style={{ background: c }}
-                                            onClick={() => setNewHabit({ ...newHabit, color: c })} />
-                                    ))}
+                                <div className="ld-form-row">
+                                    <div className="ld-color-row">
+                                        {COLORS.map(c => (
+                                            <div key={c} className={`ld-color-dot ${newHabit.color === c ? 'active' : ''}`}
+                                                style={{ background: c }}
+                                                onClick={() => setNewHabit({ ...newHabit, color: c })} />
+                                        ))}
+                                    </div>
+                                    <select
+                                        className="ld-habit-select"
+                                        value={newHabit.trackingType}
+                                        onChange={e => setNewHabit({ ...newHabit, trackingType: e.target.value })}
+                                    >
+                                        <option value="none">Yes/No</option>
+                                        <option value="count">Count (Pages/Units)</option>
+                                        <option value="hours">Hours (Timer)</option>
+                                    </select>
                                 </div>
                                 <div className="ld-form-actions">
-                                    <button onClick={() => setShowAddHabit(false)} className="ld-cancel-btn">Cancel</button>
-                                    <button onClick={addHabit} className="ld-save-btn">Create Habit</button>
+                                    <button onClick={() => { setShowAddHabit(false); setEditingHabit(null); }} className="ld-cancel-btn">Cancel</button>
+                                    <button onClick={addHabit} className="ld-save-btn">{editingHabit ? 'Save Changes' : 'Create Habit'}</button>
                                 </div>
                             </motion.div>
                         )}
@@ -306,10 +353,14 @@ const LearningDashboard = () => {
                                             <tr key={habit._id} className="ld-ht-row">
                                                 <td className="ld-ht-habit-cell">
                                                     <span className="ld-ht-dot" style={{ background: habit.color }} />
+                                                    <div className="ld-ht-actions">
+                                                        <button className="ld-row-action-btn" onClick={() => openEdit(habit)}><Edit3 size={11} /></button>
+                                                        <button className="ld-row-action-btn delete" onClick={() => deleteHabit(habit._id)}><Trash2 size={11} /></button>
+                                                    </div>
                                                     <span className="ld-ht-name">{habit.name}</span>
                                                 </td>
                                                 {weekData.map((w, i) => {
-                                                    const done = !!(habit.logs && habit.logs[w.date]);
+                                                    const done = !!(habit.logs && habit.logs[w.date] && habit.logs[w.date].length > 0);
                                                     const isToday = w.date === todayStr;
                                                     return (
                                                         <td
@@ -322,7 +373,12 @@ const LearningDashboard = () => {
                                                                 className={`ld-ht-cell${done ? ' done' : ''}${isToday ? ' clickable' : ''}`}
                                                                 style={done ? { background: habit.color + '25', borderColor: habit.color } : {}}
                                                             >
-                                                                {done && <CheckCircle2 size={12} style={{ color: habit.color }} />}
+                                                                {done && (habit.trackingType === 'none' ?
+                                                                    <CheckCircle2 size={12} style={{ color: habit.color }} /> :
+                                                                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: habit.color }}>
+                                                                        {(habit.logs[w.date] || []).reduce((acc, c) => acc + c.value, 0)}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </td>
                                                     );
@@ -355,7 +411,7 @@ const LearningDashboard = () => {
                                 if (!date) return <div key={idx} className="ld-cal-cell empty" />;
                                 const dStr = date.toISOString().split('T')[0];
                                 const isToday = dStr === todayStr;
-                                const doneCount = habits.filter(h => h.logs && h.logs[dStr]).length;
+                                const doneCount = habits.filter(h => h.logs && h.logs[dStr] && h.logs[dStr].length > 0).length;
                                 const pct = habits.length > 0 ? doneCount / habits.length : 0;
                                 const bg = pct === 0 ? 'transparent' :
                                     pct < 0.34 ? '#14b8a620' :
@@ -439,6 +495,35 @@ const LearningDashboard = () => {
                     </motion.section>
                 </div>
             </div>
+            {/* Manual Entry Modal */}
+            <AnimatePresence>
+                {manualEntry && (
+                    <div className="ld-modal-overlay">
+                        <motion.div className="ld-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+                            <h3>Correct Progress</h3>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                                Set total for <strong>{manualEntry.name}</strong> on {manualEntry.date}
+                            </p>
+                            <div className="ld-habit-input-group">
+                                <input
+                                    type="number"
+                                    step="any"
+                                    value={manualEntry.value}
+                                    onChange={e => setManualEntry({ ...manualEntry, value: e.target.value })}
+                                    onKeyDown={e => e.key === 'Enter' && handleSetProgress()}
+                                    autoFocus
+                                    className="ld-habit-input-field"
+                                    style={{ width: '100%', padding: '0.6rem', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', marginBottom: '1rem' }}
+                                />
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button className="ld-save-btn" style={{ flex: 1 }} onClick={handleSetProgress}>Save</button>
+                                    <button className="ld-cancel-btn" style={{ flex: 1 }} onClick={() => setManualEntry(null)}>Cancel</button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

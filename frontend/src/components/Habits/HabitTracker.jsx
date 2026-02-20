@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Calendar, CheckCircle2, ChevronLeft, ChevronRight,
-    Plus, Trash2, Zap, Flame
+    Plus, Trash2, Zap, Flame, Edit3, Check, X
 } from 'lucide-react';
 import { api } from '../../api';
 import './HabitTracker.css';
@@ -13,8 +13,9 @@ const HabitTracker = () => {
     const [habits, setHabits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentMonth, setCurrentMonth] = useState(new Date());
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [newHabit, setNewHabit] = useState({ name: '', icon: 'Zap', color: '#14b8a6' });
+    const [newHabit, setNewHabit] = useState({ name: '', icon: 'Zap', color: '#14b8a6', trackingType: 'none' });
+    const [editingHabit, setEditingHabit] = useState(null);
+    const [showManualInput, setShowManualInput] = useState(null); // { habitId, dateStr, value }
     const tableBodyRef = useRef(null);
 
     const fetchHabits = async () => {
@@ -34,21 +35,52 @@ const HabitTracker = () => {
     const handleAddHabit = async () => {
         if (!newHabit.name.trim()) return;
         try {
-            await api.post('/habits', newHabit);
-            setNewHabit({ name: '', icon: 'Zap', color: '#14b8a6' });
+            if (editingHabit) {
+                await api.put(`/habits/${editingHabit._id}`, newHabit);
+            } else {
+                await api.post('/habits', newHabit);
+            }
+            setNewHabit({ name: '', icon: 'Zap', color: '#14b8a6', trackingType: 'none' });
             setShowAddModal(false);
+            setEditingHabit(null);
             fetchHabits();
         } catch (error) {
-            console.error('Error adding habit:', error);
+            console.error('Error adding/editing habit:', error);
         }
     };
 
-    const toggleHabit = async (habitId, dateStr) => {
+    const openEditModal = (habit) => {
+        setEditingHabit(habit);
+        setNewHabit({ name: habit.name, icon: habit.icon, color: habit.color, trackingType: habit.trackingType });
+        setShowAddModal(true);
+    };
+
+    const toggleHabit = async (habit, dateStr) => {
         try {
-            await api.post(`/habits/${habitId}/toggle`, { date: dateStr });
+            if (habit.trackingType === 'none') {
+                await api.post(`/habits/${habit._id}/toggle`, { date: dateStr });
+            } else {
+                const currentVal = getDayTotal(habit.logs, dateStr);
+                setShowManualInput({ habitId: habit._id, dateStr, value: currentVal });
+                return;
+            }
             fetchHabits();
         } catch (error) {
             console.error('Error toggling habit:', error);
+        }
+    };
+
+    const handleSetProgress = async () => {
+        if (!showManualInput) return;
+        try {
+            await api.post(`/habits/${showManualInput.habitId}/set-progress`, {
+                date: showManualInput.dateStr,
+                value: parseFloat(showManualInput.value)
+            });
+            setShowManualInput(null);
+            fetchHabits();
+        } catch (error) {
+            console.error('Error setting progress:', error);
         }
     };
 
@@ -83,10 +115,18 @@ const HabitTracker = () => {
         for (let i = 0; i < 365; i++) {
             const d = new Date(today);
             d.setDate(today.getDate() - i);
-            if (logs[d.toISOString().split('T')[0]]) streak++;
+            const ds = d.toISOString().split('T')[0];
+            const logEntries = logs[ds];
+            if (logEntries && Array.isArray(logEntries) && logEntries.length > 0) streak++;
             else break;
         }
         return streak;
+    };
+
+    const getDayTotal = (logs, ds) => {
+        const entries = logs?.[ds];
+        if (!entries || !Array.isArray(entries)) return 0;
+        return entries.reduce((acc, curr) => acc + curr.value, 0);
     };
 
     const todayStr = new Date().toISOString().split('T')[0];
@@ -96,7 +136,7 @@ const HabitTracker = () => {
     // Summary row: how many habits done per day
     const dayTotals = monthDays.map(d => {
         const ds = d.toISOString().split('T')[0];
-        return habits.filter(h => h.logs && h.logs[ds]).length;
+        return habits.filter(h => h.logs && h.logs[ds] && h.logs[ds].length > 0).length;
     });
 
     if (loading) {
@@ -170,7 +210,7 @@ const HabitTracker = () => {
                         <tbody ref={tableBodyRef}>
                             {habits.map((habit, hIdx) => {
                                 const streak = calcStreak(habit.logs);
-                                const monthTotal = monthDays.filter(d => habit.logs && habit.logs[d.toISOString().split('T')[0]]).length;
+                                const monthTotal = monthDays.filter(d => habit.logs && habit.logs[d.toISOString().split('T')[0]] && habit.logs[d.toISOString().split('T')[0]].length > 0).length;
                                 return (
                                     <motion.tr
                                         key={habit._id}
@@ -185,6 +225,10 @@ const HabitTracker = () => {
                                                 className="ht-habit-dot"
                                                 style={{ background: habit.color }}
                                             />
+                                            <div className="ht-habit-actions">
+                                                <button className="ht-row-action-btn" onClick={() => openEditModal(habit)}><Edit3 size={12} /></button>
+                                                <button className="ht-row-action-btn delete" onClick={() => deleteHabit(habit._id)}><Trash2 size={12} /></button>
+                                            </div>
                                             <span className="ht-habit-name">{habit.name}</span>
                                         </td>
 
@@ -194,23 +238,32 @@ const HabitTracker = () => {
                                             const done = !!(habit.logs && habit.logs[ds]);
                                             const isToday = ds === todayStr;
                                             const isFuture = d > new Date();
+                                            const logsForDay = habit.logs?.[ds] || [];
+                                            const timeString = logsForDay.length > 0
+                                                ? logsForDay.map(l => new Date(l.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })).join(', ')
+                                                : '';
                                             return (
                                                 <td
                                                     key={ds}
                                                     className={`ht-td-day${isToday ? ' today' : ''}${isFuture ? ' future' : ''}`}
-                                                    onClick={() => !isFuture && toggleHabit(habit._id, ds)}
-                                                    title={`${habit.name} – ${d.toDateString()}`}
+                                                    onClick={() => !isFuture && toggleHabit(habit, ds)}
+                                                    title={`${habit.name} – ${d.toDateString()}${timeString ? '\nLogged at: ' + timeString : ''}`}
                                                 >
                                                     <div
                                                         className={`ht-cell${done ? ' done' : ''}`}
                                                         style={done ? { background: habit.color + '22', borderColor: habit.color } : {}}
                                                     >
-                                                        {done && (
+                                                        {done && (habit.trackingType === 'none' ? (
                                                             <CheckCircle2
                                                                 size={14}
                                                                 style={{ color: habit.color }}
                                                             />
-                                                        )}
+                                                        ) : (
+                                                            <span className="ht-cell-value" style={{ color: habit.color }}>
+                                                                {getDayTotal(habit.logs, ds)}
+                                                                {habit.trackingType === 'hours' ? 'h' : ''}
+                                                            </span>
+                                                        ))}
                                                     </div>
                                                 </td>
                                             );
@@ -288,18 +341,31 @@ const HabitTracker = () => {
                 {showAddModal && (
                     <motion.div className="ht-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                         <motion.div className="ht-modal" initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9 }}>
-                            <h3>New Habit</h3>
+                            <h3>{editingHabit ? 'Edit Habit' : 'New Habit'}</h3>
                             <div className="ht-form-group">
                                 <label>Name</label>
                                 <input
                                     type="text"
-                                    placeholder="e.g. Morning Run"
+                                    placeholder="e.g. Meditation"
                                     value={newHabit.name}
                                     onChange={e => setNewHabit({ ...newHabit, name: e.target.value })}
                                     onKeyDown={e => e.key === 'Enter' && handleAddHabit()}
                                     autoFocus
                                 />
                             </div>
+                            <div className="ht-form-group">
+                                <label>Tracking Type</label>
+                                <select
+                                    className="ht-select"
+                                    value={newHabit.trackingType}
+                                    onChange={e => setNewHabit({ ...newHabit, trackingType: e.target.value })}
+                                >
+                                    <option value="none">Checkbox (Yes/No)</option>
+                                    <option value="count">Count (e.g. Pages, Glasses)</option>
+                                    <option value="hours">Hours (e.g. Study, Meditation)</option>
+                                </select>
+                            </div>
+                            {/* ... color row ... */}
                             <div className="ht-form-group">
                                 <label>Color</label>
                                 <div className="ht-color-row">
@@ -314,8 +380,40 @@ const HabitTracker = () => {
                                 </div>
                             </div>
                             <div className="ht-modal-actions">
-                                <button className="ht-cancel-btn" onClick={() => setShowAddModal(false)}>Cancel</button>
-                                <button className="ht-save-btn" onClick={handleAddHabit}>Create Habit</button>
+                                <button className="ht-cancel-btn" onClick={() => { setShowAddModal(false); setEditingHabit(null); }}>Cancel</button>
+                                <button className="ht-save-btn" onClick={handleAddHabit}>{editingHabit ? 'Save Changes' : 'Create Habit'}</button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Manual Progress Setting Modal */}
+            <AnimatePresence>
+                {showManualInput && (
+                    <motion.div className="ht-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <motion.div className="ht-modal" initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h3 style={{ margin: 0 }}>Set Progress</h3>
+                                <button onClick={() => setShowManualInput(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={20} /></button>
+                            </div>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                                Correct your progress for {showManualInput.dateStr}
+                            </p>
+                            <div className="ht-form-group">
+                                <label>Total Value</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    placeholder="Enter total amount"
+                                    value={showManualInput.value}
+                                    onChange={e => setShowManualInput({ ...showManualInput, value: e.target.value })}
+                                    onKeyDown={e => e.key === 'Enter' && handleSetProgress()}
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="ht-modal-actions">
+                                <button className="ht-save-btn" style={{ width: '100%' }} onClick={handleSetProgress}>Update Progress</button>
                             </div>
                         </motion.div>
                     </motion.div>

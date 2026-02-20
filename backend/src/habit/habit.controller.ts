@@ -31,4 +31,14 @@ export class HabitController {
     async toggleHabit(@Request() req, @Param('id') id: string, @Body('date') date: string) {
         return this.habitService.toggleLog(req.user.userId, id, date);
     }
+
+    @Post(':id/progress')
+    async logProgress(@Request() req, @Param('id') id: string, @Body('date') date: string, @Body('value') value: number) {
+        return this.habitService.logProgress(req.user.userId, id, date, value);
+    }
+
+    @Post(':id/set-progress')
+    async setProgress(@Request() req, @Param('id') id: string, @Body('date') date: string, @Body('value') value: number) {
+        return this.habitService.setProgress(req.user.userId, id, date, value);
+    }
 }

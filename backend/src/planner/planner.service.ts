@@ -22,7 +22,8 @@ export class PlannerService {
                 userId,
                 date,
                 blocks: [],
-                summary: ''
+                summary: '',
+                wakeUpTime: ''
             };
         }
         return planner;
@@ -30,7 +31,7 @@ export class PlannerService {
 
 
     async update(userId: string, date: string, data: any): Promise<any> {
-        const { blocks, summary } = data;
+        const { blocks, summary, wakeUpTime } = data;
 
         // Find existing planner to track tasks that might be removed
         const oldPlanner = await this.plannerModel.findOne({
@@ -47,7 +48,7 @@ export class PlannerService {
 
         const updatedPlanner = await this.plannerModel.findOneAndUpdate(
             { userId: new Types.ObjectId(userId), date },
-            { $set: { blocks: blocks || [], summary: summary || '' } },
+            { $set: { blocks: blocks || [], summary: summary || '', wakeUpTime: wakeUpTime || '' } },
             { new: true, upsert: true }
         ).exec();
 
@@ -111,13 +112,14 @@ export class PlannerService {
         const planners = await this.plannerModel.find({
             userId: new Types.ObjectId(userId),
             date: { $gte: startDate, $lte: endDate }
-        }, { date: 1, blocks: 1 }).exec();
+        }, { date: 1, blocks: 1, wakeUpTime: 1 }).exec();
 
         return planners.map(p => ({
             date: p.date,
             totalBlocks: p.blocks.length,
             completedBlocks: p.blocks.filter(b => b.completed).length,
-            tags: Array.from(new Set(p.blocks.map(b => b.tag).filter(t => t && t !== 'none')))
+            tags: Array.from(new Set(p.blocks.map(b => b.tag).filter(t => t && t !== 'none'))),
+            wakeUpTime: p.wakeUpTime || ''
         }));
     }
 }

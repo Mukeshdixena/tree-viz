@@ -120,6 +120,62 @@
     justify-content: center;
 }
 
+.wake-up-section {
+    margin-top: 1.5rem;
+}
+
+.wake-up-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--bg-tertiary);
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    width: fit-content;
+    transition: all 0.2s;
+}
+
+.wake-up-card:hover {
+    border-color: var(--primary);
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-sm);
+}
+
+.wake-up-icon {
+    color: #f59e0b;
+    /* Amber/Sunrise color */
+}
+
+.wake-up-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.wake-up-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.wake-up-input {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: inherit;
+    outline: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.wake-up-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+}
+
 .header-right {
     display: flex;
     align-items: center;

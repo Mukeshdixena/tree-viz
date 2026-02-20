@@ -486,6 +486,23 @@ const DayPlanner = () => {
                             )}
                         </div>
                     </div>
+
+                    {viewMode === 'day' && (
+                        <div className="wake-up-section">
+                            <div className="wake-up-card">
+                                <Sunrise size={20} className="wake-up-icon" />
+                                <div className="wake-up-info">
+                                    <span className="wake-up-label">Wake Up Time</span>
+                                    <input
+                                        type="time"
+                                        value={planner?.wakeUpTime || ''}
+                                        onChange={(e) => setPlanner({ ...planner, wakeUpTime: e.target.value })}
+                                        className="wake-up-input"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="header-right">

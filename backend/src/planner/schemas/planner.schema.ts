@@ -46,6 +46,9 @@ export class Planner extends Document {
 
     @Prop({ default: '' })
     summary: string;
+
+    @Prop({ default: '' })
+    wakeUpTime: string; // e.g. "06:30"
 }
 
 export const PlannerSchema = SchemaFactory.createForClass(Planner);

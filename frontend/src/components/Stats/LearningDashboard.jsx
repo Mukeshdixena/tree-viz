@@ -4,7 +4,7 @@ import {
     Book, Clock, Trophy, Target, Zap, Flame, CheckCircle2,
     ChevronLeft, ChevronRight, Calendar, BarChart2,
     Star, TrendingUp, BookOpen, Brain, Coffee, Plus, Trash2, Edit3,
-    Activity, Shield, PieChart, Layers, ArrowUpRight, ZapOff, Heart
+    Activity, Shield, PieChart, Layers, ArrowUpRight, ZapOff, Heart, Sunrise
 } from 'lucide-react';
 import { api } from '../../api';
 import { subscribeToUpdates, unsubscribeFromUpdates } from '../../socket';
@@ -278,6 +278,7 @@ const LearningDashboard = () => {
                 <StatCard icon={Target} title="Active Roadmaps" value={stats?.activeGoals ?? 0} sub="In progress" color="#8b5cf6" delay={0.25} />
                 <StatCard icon={Clock} title="Study Hours" value={`${stats?.totalHours ?? 0}h`} sub="Total invested" color="#6366f1" delay={0.3} />
                 <StatCard icon={TrendingUp} title="Day Streak" value={`${stats?.streak ?? 0}d`} sub="Journal + tasks" color="#ec4899" delay={0.35} />
+                <StatCard icon={Sunrise} title="Morning Wakeup" value={stats?.todayWakeUp ?? '--:--'} sub={`Avg: ${stats?.avgWakeUp ?? '--:--'}`} color="#f59e0b" delay={0.4} />
             </section>
 
             {/* ── Habit Totals (All-time) ── */}

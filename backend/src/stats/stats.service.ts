@@ -5,6 +5,7 @@ import { Journal } from '../journal/schemas/journal.schema';
 import { Task } from '../task/schemas/task.schema';
 import { Tree } from '../tree/schemas/tree.schema';
 import { Habit } from '../habit/schemas/habit.schema';
+import { Planner } from '../planner/schemas/planner.schema';
 
 @Injectable()
 export class StatsService {
@@ -13,6 +14,7 @@ export class StatsService {
         @InjectModel(Task.name) private taskModel: Model<Task>,
         @InjectModel(Tree.name) private treeModel: Model<Tree>,
         @InjectModel(Habit.name) private habitModel: Model<Habit>,
+        @InjectModel(Planner.name) private plannerModel: Model<Planner>,
     ) { }
 
     async getDashboardStats(userId: string) {
@@ -21,6 +23,7 @@ export class StatsService {
         const trees = await this.treeModel.find({ userId: userObjId }).exec();
         const journals = await this.journalModel.find({ userId: userObjId }).exec();
         const habits = await this.habitModel.find({ userId: userObjId }).exec();
+        const planners = await this.plannerModel.find({ userId: userObjId }).exec();
 
         const completedGoals = tasks.filter(t => t.status === 'done').length;
         const activeGoals = tasks.filter(t => t.status !== 'done').length;
@@ -80,6 +83,28 @@ export class StatsService {
             };
         });
 
+        // Calculate Average Wakeup Time
+        const wakeUpTimes = planners
+            .map(p => p.wakeUpTime)
+            .filter(t => t && t.includes(':'));
+
+        let avgWakeUp = '--:--';
+        if (wakeUpTimes.length > 0) {
+            let totalMinutes = 0;
+            wakeUpTimes.forEach(t => {
+                const [h, m] = t.split(':').map(Number);
+                totalMinutes += h * 60 + m;
+            });
+            const avgMinutes = Math.round(totalMinutes / wakeUpTimes.length);
+            const avgH = Math.floor(avgMinutes / 60);
+            const avgM = avgMinutes % 60;
+            avgWakeUp = `${avgH.toString().padStart(2, '0')}:${avgM.toString().padStart(2, '0')}`;
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        const todayPlanner = planners.find(p => p.date === today);
+        const todayWakeUp = todayPlanner?.wakeUpTime || '--:--';
+
         return {
             totalHours: Math.round(totalHours * 10) / 10,
             streak,
@@ -87,7 +112,9 @@ export class StatsService {
             activeGoals,
             topicMastery,
             recentActivity,
-            habitStats
+            habitStats,
+            avgWakeUp,
+            todayWakeUp
         };
     }
 

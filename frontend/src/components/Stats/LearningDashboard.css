@@ -1,4 +1,6 @@
 /* ============ PROGRESS HUB (Merged Habits + Stats) ============ */
+@import 'react-grid-layout/css/styles.css';
+@import 'react-resizable/css/styles.css';
 
 .ld-container {
     padding: 2.5rem 2.5rem 5rem 2.5rem;
@@ -138,6 +140,54 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+}
+
+/* ── Grid Layout ── */
+.ld-grid-layout {
+    margin-top: 1rem;
+}
+
+.react-grid-item {
+    transition: none !important;
+    /* Performance during drag */
+}
+
+.react-grid-placeholder {
+    background: rgba(var(--primary-rgb), 0.1) !important;
+    border-radius: 28px !important;
+    opacity: 0.5 !important;
+}
+
+.ld-card-header,
+.ld-section-title,
+.ld-stat-card {
+    cursor: grab;
+}
+
+.ld-card-header:active,
+.ld-section-title:active,
+.ld-stat-card:active {
+    cursor: grabbing;
+}
+
+.react-resizable-handle {
+    background-image: none !important;
+    width: 20px !important;
+    height: 20px !important;
+    bottom: 5px !important;
+    right: 5px !important;
+}
+
+.react-resizable-handle::after {
+    content: "";
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--text-muted);
+    border-bottom: 2px solid var(--text-muted);
+    border-radius: 0 0 2px 0;
 }
 
 /* ── Habit Totals Section ── */

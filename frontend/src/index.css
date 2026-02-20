@@ -12,6 +12,7 @@
 
   /* Teal Theme Variables */
   --primary: #14b8a6;
+  --primary-rgb: 20, 184, 166;
   --primary-hover: #0d9488;
   --primary-light: #ccfbf1;
 
@@ -40,6 +41,7 @@ body.dark-mode {
 
   /* Teal Theme - Dark Mode */
   --primary: #2dd4bf;
+  --primary-rgb: 45, 212, 191;
   /* Teal 400 - bright and visible */
   --primary-hover: #14b8a6;
   /* Teal 500 */

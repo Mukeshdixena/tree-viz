@@ -6,6 +6,7 @@ import {
     Star, TrendingUp, BookOpen, Brain, Coffee, Plus, Trash2, Edit3,
     Activity, Shield, PieChart, Layers, ArrowUpRight, ZapOff, Heart
 } from 'lucide-react';
+import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout';
 import { api } from '../../api';
 import { subscribeToUpdates, unsubscribeFromUpdates } from '../../socket';
 import './LearningDashboard.css';
@@ -29,6 +30,7 @@ const ICON_MAP = {
 const StatCard = ({ icon: Icon, title, value, sub, color, delay }) => (
     <motion.div
         className="ld-stat-card"
+        style={{ height: '100%', margin: 0 }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay, duration: 0.4 }}
@@ -99,6 +101,36 @@ const LearningDashboard = () => {
     const [newHabit, setNewHabit] = useState({ name: '', color: '#14b8a6', trackingType: 'none' });
     const [editingHabit, setEditingHabit] = useState(null);
     const [manualEntry, setManualEntry] = useState(null); // { habitId, name, value, date }
+
+    // Layout State
+    const [layout, setLayout] = useState(() => {
+        const saved = localStorage.getItem('dashboard_layout');
+        return saved ? JSON.parse(saved) : null;
+    });
+
+    const defaultLayout = [
+        { i: 'stat-streak', x: 0, y: 0, w: 2, h: 4 },
+        { i: 'stat-today', x: 2, y: 0, w: 2, h: 4 },
+        { i: 'stat-tasks', x: 4, y: 0, w: 2, h: 4 },
+        { i: 'stat-roadmaps', x: 6, y: 0, w: 2, h: 4 },
+        { i: 'stat-study', x: 8, y: 0, w: 2, h: 4 },
+        { i: 'stat-daystreak', x: 10, y: 0, w: 2, h: 4 },
+        { i: 'habit-totals', x: 0, y: 4, w: 12, h: 3 },
+        { i: 'habit-tracker', x: 0, y: 7, w: 8, h: 15 },
+        { i: 'weekly-activity', x: 8, y: 7, w: 4, h: 6 },
+        { i: 'roadmap-mastery', x: 8, y: 13, w: 4, h: 6 },
+        { i: 'recent-activity', x: 8, y: 19, w: 4, h: 6 },
+        { i: 'analytics', x: 0, y: 22, w: 12, h: 6 },
+        { i: 'detailed-feed', x: 0, y: 28, w: 6, h: 8 },
+        { i: 'system-health', x: 6, y: 28, w: 6, h: 8 },
+    ];
+
+    const onLayoutChange = (newLayout) => {
+        localStorage.setItem('dashboard_layout', JSON.stringify(newLayout));
+        setLayout(newLayout);
+    };
+
+    const { width, containerRef, mounted } = useContainerWidth();
 
     const COLORS = ['#14b8a6', '#3b82f6', '#8b5cf6', '#ef4444', '#f59e0b', '#10b981'];
     const DONUT_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f43f5e', '#f59e0b', '#14b8a6'];
@@ -264,383 +296,401 @@ const LearningDashboard = () => {
                     <h1>My Progress Hub</h1>
                     <p>Stay consistent. Track everything. Win every day.</p>
                 </div>
-                <div className="ld-header-date">
-                    <Calendar size={16} />
-                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                <div className="ld-header-right-group" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <button
+                        className="ld-reset-btn"
+                        onClick={() => { if (window.confirm('Reset dashboard layout?')) { localStorage.removeItem('dashboard_layout'); window.location.reload(); } }}
+                        style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-muted)', cursor: 'pointer' }}
+                    >
+                        Reset Layout
+                    </button>
+                    <div className="ld-header-date">
+                        <Calendar size={16} />
+                        {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                    </div>
                 </div>
             </header>
 
-            {/* ── Top Stats ── */}
-            <section className="ld-stats-grid">
-                <StatCard icon={Flame} title="Habit Streak" value={`${bestStreak}d`} sub="Longest active streak" color="#f59e0b" delay={0.1} />
-                <StatCard icon={CheckCircle2} title="Today's Habits" value={`${todayHabitsDone}/${todayHabitsTotal}`} sub="Keep going!" color="#10b981" delay={0.15} />
-                <StatCard icon={Trophy} title="Tasks Completed" value={stats?.completedGoals ?? 0} sub="All time" color="#3b82f6" delay={0.2} />
-                <StatCard icon={Target} title="Active Roadmaps" value={stats?.activeGoals ?? 0} sub="In progress" color="#8b5cf6" delay={0.25} />
-                <StatCard icon={Clock} title="Study Hours" value={`${stats?.totalHours ?? 0}h`} sub="Total invested" color="#6366f1" delay={0.3} />
-                <StatCard icon={TrendingUp} title="Day Streak" value={`${stats?.streak ?? 0}d`} sub="Journal + tasks" color="#ec4899" delay={0.35} />
-            </section>
+            <div ref={containerRef} className="ld-grid-container" style={{ width: '100%' }}>
+                {mounted && (
+                    <ResponsiveGridLayout
+                        className="ld-grid-layout"
+                        layouts={{ lg: layout || defaultLayout }}
+                        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+                        rowHeight={30}
+                        width={width}
+                        onLayoutChange={onLayoutChange}
+                        draggableHandle=".ld-card-header, .ld-section-title, .ld-stat-card"
+                    >
+                        {/* ── Top Stats (Split) ── */}
+                        <div key="stat-streak">
+                            <StatCard icon={Flame} title="Habit Streak" value={`${bestStreak}d`} sub="Longest active streak" color="#f59e0b" delay={0.1} />
+                        </div>
+                        <div key="stat-today">
+                            <StatCard icon={CheckCircle2} title="Today's Habits" value={`${todayHabitsDone}/${todayHabitsTotal}`} sub="Keep going!" color="#10b981" delay={0.15} />
+                        </div>
+                        <div key="stat-tasks">
+                            <StatCard icon={Trophy} title="Tasks Completed" value={stats?.completedGoals ?? 0} sub="All time" color="#3b82f6" delay={0.2} />
+                        </div>
+                        <div key="stat-roadmaps">
+                            <StatCard icon={Target} title="Active Roadmaps" value={stats?.activeGoals ?? 0} sub="In progress" color="#8b5cf6" delay={0.25} />
+                        </div>
+                        <div key="stat-study">
+                            <StatCard icon={Clock} title="Study Hours" value={`${stats?.totalHours ?? 0}h`} sub="Total invested" color="#6366f1" delay={0.3} />
+                        </div>
+                        <div key="stat-daystreak">
+                            <StatCard icon={TrendingUp} title="Day Streak" value={`${stats?.streak ?? 0}d`} sub="Journal + tasks" color="#ec4899" delay={0.35} />
+                        </div>
 
-            {/* ── Habit Totals (All-time) ── */}
-            {stats?.habitStats?.length > 0 && (
-                <section className="ld-habit-totals-section">
-                    <div className="ld-ht-grid">
-                        {stats.habitStats.map((h, i) => {
-                            const Icon = ICON_MAP[h.icon] || Zap;
-                            return (
-                                <motion.div
-                                    key={h._id}
-                                    className="ld-ht-card"
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.4 + (i * 0.05) }}
-                                >
-                                    <div className="ld-ht-card-icon" style={{ background: h.color + '15', color: h.color }}>
-                                        <Icon size={14} />
+                        {/* ── Habit Totals (All-time) ── */}
+                        <div key="habit-totals">
+                            {stats?.habitStats?.length > 0 && (
+                                <section className="ld-habit-totals-section">
+                                    <div className="ld-ht-grid">
+                                        {stats.habitStats.map((h, i) => {
+                                            const Icon = ICON_MAP[h.icon] || Zap;
+                                            return (
+                                                <motion.div
+                                                    key={h._id}
+                                                    className="ld-ht-card"
+                                                    initial={{ opacity: 0, scale: 0.9 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ delay: 0.4 + (i * 0.05) }}
+                                                >
+                                                    <div className="ld-ht-card-icon" style={{ background: h.color + '15', color: h.color }}>
+                                                        <Icon size={14} />
+                                                    </div>
+                                                    <div className="ld-ht-card-content">
+                                                        <span className="ld-ht-card-label">{h.name}</span>
+                                                        <div className="ld-ht-card-main">
+                                                            <span className="ld-ht-card-val">{h.total}</span>
+                                                            <span className="ld-ht-card-unit">
+                                                                {h.trackingType === 'hours' ? 'hrs' : h.trackingType === 'count' ? 'units' : 'times'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="ld-ht-card-progress-mini">
+                                                        <div className="ld-ht-card-bar" style={{ background: h.color, width: `${(h.total / maxHabitTotal) * 100}%`, opacity: 0.5 }} />
+                                                    </div>
+                                                </motion.div>
+                                            );
+                                        })}
                                     </div>
-                                    <div className="ld-ht-card-content">
-                                        <span className="ld-ht-card-label">{h.name}</span>
-                                        <div className="ld-ht-card-main">
-                                            <span className="ld-ht-card-val">{h.total}</span>
-                                            <span className="ld-ht-card-unit">
-                                                {h.trackingType === 'hours' ? 'hrs' : h.trackingType === 'count' ? 'units' : 'times'}
+                                </section>
+                            )}
+                        </div>
+
+                        {/* ── Habit Tracker ── */}
+                        <div key="habit-tracker">
+                            <motion.section className="ld-card ld-habits-section" style={{ height: '100%' }}>
+                                <div className="ld-card-header ld-section-header">
+                                    <div className="ld-section-title">
+                                        <Flame size={18} color="#f59e0b" />
+                                        <h2>Habit Tracker</h2>
+                                    </div>
+                                    <div className="ld-habit-controls">
+                                        <div className="ld-month-nav">
+                                            <button onClick={() => changeMonth(-1)} className="ld-nav-btn"><ChevronLeft size={16} /></button>
+                                            <span>{currentMonth.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                                            <button onClick={() => changeMonth(1)} className="ld-nav-btn"><ChevronRight size={16} /></button>
+                                        </div>
+                                        <button className="ld-add-habit-btn" onClick={() => setShowAddHabit(!showAddHabit)}>
+                                            <Plus size={14} /> Add
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Add habit inline form */}
+                                <AnimatePresence>
+                                    {showAddHabit && (
+                                        <motion.div className="ld-add-habit-form"
+                                            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Habit name (e.g. Read 20 pages)"
+                                                value={newHabit.name}
+                                                onChange={e => setNewHabit({ ...newHabit, name: e.target.value })}
+                                                onKeyDown={e => e.key === 'Enter' && addHabit()}
+                                                autoFocus
+                                                className="ld-habit-input"
+                                            />
+                                            <div className="ld-form-row">
+                                                <div className="ld-color-row">
+                                                    {COLORS.map(c => (
+                                                        <div key={c} className={`ld-color-dot ${newHabit.color === c ? 'active' : ''}`}
+                                                            style={{ background: c }}
+                                                            onClick={() => setNewHabit({ ...newHabit, color: c })} />
+                                                    ))}
+                                                </div>
+                                                <select
+                                                    className="ld-habit-select"
+                                                    value={newHabit.trackingType}
+                                                    onChange={e => setNewHabit({ ...newHabit, trackingType: e.target.value })}
+                                                >
+                                                    <option value="none">Yes/No</option>
+                                                    <option value="count">Count (Pages/Units)</option>
+                                                    <option value="hours">Hours (Timer)</option>
+                                                </select>
+                                            </div>
+                                            <div className="ld-form-actions">
+                                                <button onClick={() => { setShowAddHabit(false); setEditingHabit(null); }} className="ld-cancel-btn">Cancel</button>
+                                                <button onClick={addHabit} className="ld-save-btn">{editingHabit ? 'Save Changes' : 'Create Habit'}</button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                {/* 7-day habit table */}
+                                {habits.length === 0 ? (
+                                    <p className="ld-empty">No habits yet. Add one above!</p>
+                                ) : (
+                                    <div className="ld-habit-table-wrap">
+                                        <table className="ld-habit-table">
+                                            <thead>
+                                                <tr>
+                                                    <th className="ld-ht-habit-col">Habit</th>
+                                                    {weekData.map((w, i) => (
+                                                        <th key={i} className={`ld-ht-day-col${w.date === todayStr ? ' today' : ''}`}>
+                                                            <span className="ld-ht-day-name">{w.day}</span>
+                                                            <span className="ld-ht-day-num">{new Date(w.date).getDate()}</span>
+                                                        </th>
+                                                    ))}
+                                                    <th className="ld-ht-streak-col">Streak</th>
+                                                    <th className="ld-ht-del-col"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {habits.map(habit => {
+                                                    const streak = calcHabitStreak(habit.logs);
+                                                    return (
+                                                        <tr key={habit._id} className="ld-ht-row">
+                                                            <td className="ld-ht-habit-cell">
+                                                                <span className="ld-ht-dot" style={{ background: habit.color }} />
+                                                                <div className="ld-ht-actions">
+                                                                    <button className="ld-row-action-btn" onClick={() => openEdit(habit)}><Edit3 size={11} /></button>
+                                                                    <button className="ld-row-action-btn delete" onClick={() => deleteHabit(habit._id)}><Trash2 size={11} /></button>
+                                                                </div>
+                                                                <span className="ld-ht-name">{habit.name}</span>
+                                                            </td>
+                                                            {weekData.map((w, i) => {
+                                                                const done = !!(habit.logs && habit.logs[w.date] && habit.logs[w.date].length > 0);
+                                                                const isToday = w.date === todayStr;
+                                                                return (
+                                                                    <td
+                                                                        key={i}
+                                                                        className={`ld-ht-cell-td${isToday ? ' today' : ''}`}
+                                                                        onClick={() => isToday && toggleHabit(habit._id)}
+                                                                        title={`${habit.name} – ${w.date}`}
+                                                                    >
+                                                                        <div
+                                                                            className={`ld-ht-cell${done ? ' done' : ''}${isToday ? ' clickable' : ''}`}
+                                                                            style={done ? { background: habit.color + '25', borderColor: habit.color } : {}}
+                                                                        >
+                                                                            {done && (habit.trackingType === 'none' ?
+                                                                                <CheckCircle2 size={12} style={{ color: habit.color }} /> :
+                                                                                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: habit.color }}>
+                                                                                    {(habit.logs[w.date] || []).reduce((acc, c) => acc + c.value, 0)}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </td>
+                                                                );
+                                                            })}
+                                                            <td className="ld-ht-streak-cell">
+                                                                {streak > 0
+                                                                    ? <span style={{ color: habit.color, fontWeight: 700, fontSize: '0.78rem' }}>🔥{streak}d</span>
+                                                                    : <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>—</span>
+                                                                }
+                                                            </td>
+                                                            <td className="ld-ht-del-cell">
+                                                                <button className="ld-habit-del" onClick={() => deleteHabit(habit._id)}><Trash2 size={12} /></button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                {/* Calendar grid */}
+                                <div className="ld-habit-calendar">
+                                    <p className="ld-subsection-label">Monthly Overview</p>
+                                    <div className="ld-cal-weekdays">
+                                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <span key={d}>{d}</span>)}
+                                    </div>
+                                    <div className="ld-cal-grid">
+                                        {days.map((date, idx) => {
+                                            if (!date) return <div key={idx} className="ld-cal-cell empty" />;
+                                            const dStr = date.toISOString().split('T')[0];
+                                            const isToday = dStr === todayStr;
+                                            const doneCount = habits.filter(h => h.logs && h.logs[dStr] && h.logs[dStr].length > 0).length;
+                                            const pct = habits.length > 0 ? doneCount / habits.length : 0;
+                                            const bg = pct === 0 ? 'transparent' :
+                                                pct < 0.34 ? '#14b8a620' :
+                                                    pct < 0.67 ? '#14b8a650' : '#14b8a6';
+                                            return (
+                                                <div key={idx} className={`ld-cal-cell ${isToday ? 'today' : ''}`}
+                                                    style={{ background: bg }}
+                                                    title={`${date.toDateString()}: ${doneCount}/${habits.length} habits`}>
+                                                    <span className="ld-cal-num">{date.getDate()}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="ld-cal-legend">
+                                        <span>Less</span>
+                                        <div className="ld-legend-dots">
+                                            {['transparent', '#14b8a620', '#14b8a650', '#14b8a6'].map((c, i) => (
+                                                <div key={i} className="ld-legend-dot" style={{ background: c === 'transparent' ? 'var(--bg-tertiary)' : c }} />
+                                            ))}
+                                        </div>
+                                        <span>More</span>
+                                    </div>
+                                </div>
+                            </motion.section>
+                        </div>
+
+                        {/* Weekly Activity */}
+                        <div key="weekly-activity">
+                            <motion.section className="ld-card" style={{ height: '100%' }}>
+                                <div className="ld-card-header ld-section-title" style={{ marginBottom: '1.5rem' }}>
+                                    <BarChart2 size={18} color="#3b82f6" />
+                                    <h2>Weekly Habit Activity</h2>
+                                </div>
+                                <div className="ld-week-bars">
+                                    {weekData.map((w, i) => (
+                                        <WeekBar key={i} day={w.day} value={w.value} max={maxWeekVal} color="var(--primary)" />
+                                    ))}
+                                </div>
+                                <p className="ld-chart-footnote">Habits completed per day</p>
+                            </motion.section>
+                        </div>
+
+                        {/* Topic Mastery */}
+                        <div key="roadmap-mastery">
+                            <motion.section className="ld-card" style={{ height: '100%' }}>
+                                <div className="ld-card-header ld-section-title" style={{ marginBottom: '1.5rem' }}>
+                                    <Brain size={18} color="#8b5cf6" />
+                                    <h2>Roadmap Mastery</h2>
+                                </div>
+                                <div className="ld-donuts">
+                                    {stats?.topicMastery?.length > 0 ? stats.topicMastery.map((t, i) => (
+                                        <ProgressDonut key={i} percentage={t.percentage} label={t.label} color={DONUT_COLORS[i % DONUT_COLORS.length]} />
+                                    )) : (
+                                        <p className="ld-empty">Complete some nodes to see mastery.</p>
+                                    )}
+                                </div>
+                            </motion.section>
+                        </div>
+
+                        {/* Recent Activity Feed */}
+                        <div key="recent-activity">
+                            <motion.section className="ld-card" style={{ height: '100%' }}>
+                                <div className="ld-card-header ld-section-title" style={{ marginBottom: '1.25rem' }}>
+                                    <BookOpen size={18} color="#10b981" />
+                                    <h2>Recent Activity</h2>
+                                </div>
+                                <ul className="ld-activity-list">
+                                    {stats?.recentActivity?.length > 0 ? stats.recentActivity.slice(0, 8).map((a, i) => (
+                                        <li key={i} className="ld-activity-item">
+                                            <div className="ld-activity-dot"
+                                                style={{ background: a.type === 'task' ? '#6366f1' : a.type === 'journal' ? '#10b981' : '#f59e0b' }} />
+                                            <div className="ld-activity-text">
+                                                <strong>{a.title}</strong>
+                                                <span>{new Date(a.date).toLocaleDateString()}</span>
+                                            </div>
+                                        </li>
+                                    )) : (
+                                        <p className="ld-empty">No activity.</p>
+                                    )}
+                                </ul>
+                            </motion.section>
+                        </div>
+
+                        {/* Detailed Analysis */}
+                        <div key="analytics">
+                            <motion.section className="ld-card ld-full-card" style={{ height: '100%' }}>
+                                <div className="ld-card-header ld-section-title" style={{ marginBottom: '2rem' }}>
+                                    <Activity size={20} color="var(--primary)" />
+                                    <h2>Consistency Analytics</h2>
+                                </div>
+                                <div className="ld-insight-grid">
+                                    <div className="ld-insight-item">
+                                        <span className="ld-insight-label">Productive Focus</span>
+                                        <span className="ld-insight-value">{stats?.totalHours > 50 ? 'Elite' : 'Stable'}</span>
+                                        <span className="ld-insight-desc">{stats?.totalHours || 0} study hours.</span>
+                                    </div>
+                                    <div className="ld-insight-item">
+                                        <span className="ld-insight-label">Peak Performance</span>
+                                        <span className="ld-insight-value">
+                                            {weekData.sort((a, b) => b.value - a.value)[0]?.day}s
+                                        </span>
+                                        <span className="ld-insight-desc">Most consistent day.</span>
+                                    </div>
+                                    <div className="ld-insight-item">
+                                        <span className="ld-insight-label">Habit Versatility</span>
+                                        <span className="ld-insight-value">{(habits.filter(h => h.trackingType !== 'none').length / (habits.length || 1) * 100).toFixed(0)}%</span>
+                                        <span className="ld-insight-desc">Complex habits percentage.</span>
+                                    </div>
+                                    <div className="ld-insight-item">
+                                        <span className="ld-insight-label">Goal Velocity</span>
+                                        <span className="ld-insight-value">+{stats?.completedGoals > 0 ? (stats.completedGoals / 7).toFixed(1) : 0}</span>
+                                        <span className="ld-insight-desc">Tasks per day.</span>
+                                    </div>
+                                </div>
+                            </motion.section>
+                        </div>
+
+                        {/* Detailed Feed */}
+                        <div key="detailed-feed">
+                            <motion.section className="ld-card" style={{ height: '100%' }}>
+                                <div className="ld-card-header ld-section-title" style={{ marginBottom: '1.5rem' }}>
+                                    <Layers size={18} color="#ec4899" />
+                                    <h2>Detailed Activity Feed</h2>
+                                </div>
+                                <div className="ld-timeline">
+                                    {stats?.recentActivity?.length > 0 ? stats.recentActivity.map((a, i) => (
+                                        <div key={i} className="ld-activity-item" style={{ marginBottom: '1.25rem' }}>
+                                            <div className="ld-activity-dot"
+                                                style={{ background: a.type === 'task' ? '#6366f1' : a.type === 'journal' ? '#10b981' : '#f59e0b' }} />
+                                            <div className="ld-activity-text">
+                                                <strong>{a.title}</strong>
+                                                <span>{new Date(a.date).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <p className="ld-empty">No detailed records.</p>
+                                    )}
+                                </div>
+                            </motion.section>
+                        </div>
+
+                        {/* System Health */}
+                        <div key="system-health">
+                            <motion.section className="ld-card" style={{ height: '100%' }}>
+                                <div className="ld-card-header ld-section-title" style={{ marginBottom: '1.5rem' }}>
+                                    <Shield size={18} color="#10b981" />
+                                    <h2>System Health</h2>
+                                </div>
+                                <div style={{ padding: '1rem', textAlign: 'center' }}>
+                                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                                        <PieChart size={120} color="var(--primary-light)" strokeWidth={1} />
+                                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                                            <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
+                                                {todayHabitsTotal > 0 ? Math.round((todayHabitsDone / todayHabitsTotal) * 100) : 100}%
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="ld-ht-card-progress-mini">
-                                        <div className="ld-ht-card-bar" style={{ background: h.color, width: `${(h.total / maxHabitTotal) * 100}%`, opacity: 0.5 }} />
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
-                    </div>
-                </section>
-            )}
-
-            {/* ── Main Grid ── */}
-            <div className="ld-main-grid">
-
-                {/* ── Habit Calendar & List ── */}
-                <motion.section className="ld-card ld-habits-section"
-                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                    <div className="ld-section-header">
-                        <div className="ld-section-title">
-                            <Flame size={18} color="#f59e0b" />
-                            <h2>Habit Tracker</h2>
-                        </div>
-                        <div className="ld-habit-controls">
-                            <div className="ld-month-nav">
-                                <button onClick={() => changeMonth(-1)} className="ld-nav-btn"><ChevronLeft size={16} /></button>
-                                <span>{currentMonth.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
-                                <button onClick={() => changeMonth(1)} className="ld-nav-btn"><ChevronRight size={16} /></button>
-                            </div>
-                            <button className="ld-add-habit-btn" onClick={() => setShowAddHabit(!showAddHabit)}>
-                                <Plus size={14} /> Add
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Add habit inline form */}
-                    <AnimatePresence>
-                        {showAddHabit && (
-                            <motion.div className="ld-add-habit-form"
-                                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-                                <input
-                                    type="text"
-                                    placeholder="Habit name (e.g. Read 20 pages)"
-                                    value={newHabit.name}
-                                    onChange={e => setNewHabit({ ...newHabit, name: e.target.value })}
-                                    onKeyDown={e => e.key === 'Enter' && addHabit()}
-                                    autoFocus
-                                    className="ld-habit-input"
-                                />
-                                <div className="ld-form-row">
-                                    <div className="ld-color-row">
-                                        {COLORS.map(c => (
-                                            <div key={c} className={`ld-color-dot ${newHabit.color === c ? 'active' : ''}`}
-                                                style={{ background: c }}
-                                                onClick={() => setNewHabit({ ...newHabit, color: c })} />
-                                        ))}
-                                    </div>
-                                    <select
-                                        className="ld-habit-select"
-                                        value={newHabit.trackingType}
-                                        onChange={e => setNewHabit({ ...newHabit, trackingType: e.target.value })}
-                                    >
-                                        <option value="none">Yes/No</option>
-                                        <option value="count">Count (Pages/Units)</option>
-                                        <option value="hours">Hours (Timer)</option>
-                                    </select>
+                                    <p style={{ marginTop: '1rem', fontSize: '0.85rem' }}>
+                                        {todayHabitsDone}/{todayHabitsTotal} habits done.
+                                    </p>
                                 </div>
-                                <div className="ld-form-actions">
-                                    <button onClick={() => { setShowAddHabit(false); setEditingHabit(null); }} className="ld-cancel-btn">Cancel</button>
-                                    <button onClick={addHabit} className="ld-save-btn">{editingHabit ? 'Save Changes' : 'Create Habit'}</button>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-
-                    {/* 7-day habit table */}
-                    {habits.length === 0 ? (
-                        <p className="ld-empty">No habits yet. Add one above!</p>
-                    ) : (
-                        <div className="ld-habit-table-wrap">
-                            <table className="ld-habit-table">
-                                <thead>
-                                    <tr>
-                                        <th className="ld-ht-habit-col">Habit</th>
-                                        {weekData.map((w, i) => (
-                                            <th key={i} className={`ld-ht-day-col${w.date === todayStr ? ' today' : ''}`}>
-                                                <span className="ld-ht-day-name">{w.day}</span>
-                                                <span className="ld-ht-day-num">{new Date(w.date).getDate()}</span>
-                                            </th>
-                                        ))}
-                                        <th className="ld-ht-streak-col">Streak</th>
-                                        <th className="ld-ht-del-col"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {habits.map(habit => {
-                                        const streak = calcHabitStreak(habit.logs);
-                                        return (
-                                            <tr key={habit._id} className="ld-ht-row">
-                                                <td className="ld-ht-habit-cell">
-                                                    <span className="ld-ht-dot" style={{ background: habit.color }} />
-                                                    <div className="ld-ht-actions">
-                                                        <button className="ld-row-action-btn" onClick={() => openEdit(habit)}><Edit3 size={11} /></button>
-                                                        <button className="ld-row-action-btn delete" onClick={() => deleteHabit(habit._id)}><Trash2 size={11} /></button>
-                                                    </div>
-                                                    <span className="ld-ht-name">{habit.name}</span>
-                                                </td>
-                                                {weekData.map((w, i) => {
-                                                    const done = !!(habit.logs && habit.logs[w.date] && habit.logs[w.date].length > 0);
-                                                    const isToday = w.date === todayStr;
-                                                    return (
-                                                        <td
-                                                            key={i}
-                                                            className={`ld-ht-cell-td${isToday ? ' today' : ''}`}
-                                                            onClick={() => isToday && toggleHabit(habit._id)}
-                                                            title={`${habit.name} – ${w.date}`}
-                                                        >
-                                                            <div
-                                                                className={`ld-ht-cell${done ? ' done' : ''}${isToday ? ' clickable' : ''}`}
-                                                                style={done ? { background: habit.color + '25', borderColor: habit.color } : {}}
-                                                            >
-                                                                {done && (habit.trackingType === 'none' ?
-                                                                    <CheckCircle2 size={12} style={{ color: habit.color }} /> :
-                                                                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: habit.color }}>
-                                                                        {(habit.logs[w.date] || []).reduce((acc, c) => acc + c.value, 0)}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    );
-                                                })}
-                                                <td className="ld-ht-streak-cell">
-                                                    {streak > 0
-                                                        ? <span style={{ color: habit.color, fontWeight: 700, fontSize: '0.78rem' }}>🔥{streak}d</span>
-                                                        : <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>—</span>
-                                                    }
-                                                </td>
-                                                <td className="ld-ht-del-cell">
-                                                    <button className="ld-habit-del" onClick={() => deleteHabit(habit._id)}><Trash2 size={12} /></button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                            </motion.section>
                         </div>
-                    )}
-
-                    {/* Calendar grid */}
-                    <div className="ld-habit-calendar">
-                        <p className="ld-subsection-label">Monthly Overview</p>
-                        <div className="ld-cal-weekdays">
-                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <span key={d}>{d}</span>)}
-                        </div>
-                        <div className="ld-cal-grid">
-                            {days.map((date, idx) => {
-                                if (!date) return <div key={idx} className="ld-cal-cell empty" />;
-                                const dStr = date.toISOString().split('T')[0];
-                                const isToday = dStr === todayStr;
-                                const doneCount = habits.filter(h => h.logs && h.logs[dStr] && h.logs[dStr].length > 0).length;
-                                const pct = habits.length > 0 ? doneCount / habits.length : 0;
-                                const bg = pct === 0 ? 'transparent' :
-                                    pct < 0.34 ? '#14b8a620' :
-                                        pct < 0.67 ? '#14b8a650' : '#14b8a6';
-                                return (
-                                    <div key={idx} className={`ld-cal-cell ${isToday ? 'today' : ''}`}
-                                        style={{ background: bg }}
-                                        title={`${date.toDateString()}: ${doneCount}/${habits.length} habits`}>
-                                        <span className="ld-cal-num">{date.getDate()}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <div className="ld-cal-legend">
-                            <span>Less</span>
-                            <div className="ld-legend-dots">
-                                {['transparent', '#14b8a620', '#14b8a650', '#14b8a6'].map((c, i) => (
-                                    <div key={i} className="ld-legend-dot" style={{ background: c === 'transparent' ? 'var(--bg-tertiary)' : c }} />
-                                ))}
-                            </div>
-                            <span>More</span>
-                        </div>
-                    </div>
-                </motion.section>
-
-                {/* ── Right Column ── */}
-                <div className="ld-right-col">
-
-                    {/* Weekly Activity */}
-                    <motion.section className="ld-card"
-                        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-                        <div className="ld-section-title" style={{ marginBottom: '1.5rem' }}>
-                            <BarChart2 size={18} color="#3b82f6" />
-                            <h2>Weekly Habit Activity</h2>
-                        </div>
-                        <div className="ld-week-bars">
-                            {weekData.map((w, i) => (
-                                <WeekBar key={i} day={w.day} value={w.value} max={maxWeekVal} color="var(--primary)" />
-                            ))}
-                        </div>
-                        <p className="ld-chart-footnote">Habits completed per day (last 7 days)</p>
-                    </motion.section>
-
-                    {/* Topic Mastery */}
-                    <motion.section className="ld-card"
-                        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-                        <div className="ld-section-title" style={{ marginBottom: '1.5rem' }}>
-                            <Brain size={18} color="#8b5cf6" />
-                            <h2>Roadmap Mastery</h2>
-                        </div>
-                        <div className="ld-donuts">
-                            {stats?.topicMastery?.length > 0 ? stats.topicMastery.map((t, i) => (
-                                <ProgressDonut key={i} percentage={t.percentage} label={t.label} color={DONUT_COLORS[i % DONUT_COLORS.length]} />
-                            )) : (
-                                <p className="ld-empty">Complete some roadmap nodes to see mastery.</p>
-                            )}
-                        </div>
-                    </motion.section>
-
-                    {/* Recent Activity Feed */}
-                    <motion.section className="ld-card"
-                        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
-                        <div className="ld-section-title" style={{ marginBottom: '1.25rem' }}>
-                            <BookOpen size={18} color="#10b981" />
-                            <h2>Recent Activity</h2>
-                        </div>
-                        <ul className="ld-activity-list">
-                            {stats?.recentActivity?.length > 0 ? stats.recentActivity.slice(0, 8).map((a, i) => (
-                                <li key={i} className="ld-activity-item">
-                                    <div className="ld-activity-dot"
-                                        style={{ background: a.type === 'task' ? '#6366f1' : a.type === 'journal' ? '#10b981' : '#f59e0b' }} />
-                                    <div className="ld-activity-text">
-                                        <strong>{a.title}</strong>
-                                        <span>{new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                                    </div>
-                                </li>
-                            )) : (
-                                <p className="ld-empty">No recent activity yet.</p>
-                            )}
-                        </ul>
-                    </motion.section>
-                </div>
-            </div>
-
-            {/* ── Bottom Section: Deep Insights & Timeline ── */}
-            <div className="ld-bottom-section">
-
-                {/* Detailed Analysis */}
-                <motion.section className="ld-card ld-full-card"
-                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
-                    <div className="ld-section-title" style={{ marginBottom: '2rem' }}>
-                        <Activity size={20} color="var(--primary)" />
-                        <h2>Consistency Analytics</h2>
-                    </div>
-
-                    <div className="ld-insight-grid">
-                        <div className="ld-insight-item">
-                            <span className="ld-insight-label">Productive Focus</span>
-                            <span className="ld-insight-value">{stats?.totalHours > 50 ? 'Elite' : 'Stable'}</span>
-                            <span className="ld-insight-desc">Based on your cumulative {stats?.totalHours || 0} study hours.</span>
-                        </div>
-                        <div className="ld-insight-item">
-                            <span className="ld-insight-label">Peak Performance</span>
-                            <span className="ld-insight-value">
-                                {weekData.sort((a, b) => b.value - a.value)[0]?.day}s
-                            </span>
-                            <span className="ld-insight-desc">You are most consistent during the weekend.</span>
-                        </div>
-                        <div className="ld-insight-item">
-                            <span className="ld-insight-label">Habit Versatility</span>
-                            <span className="ld-insight-value">{(habits.filter(h => h.trackingType !== 'none').length / (habits.length || 1) * 100).toFixed(0)}%</span>
-                            <span className="ld-insight-desc">Percentage of complex/numeric habits vs simple toggles.</span>
-                        </div>
-                        <div className="ld-insight-item">
-                            <span className="ld-insight-label">Goal Velocity</span>
-                            <span className="ld-insight-value">+{stats?.completedGoals > 0 ? (stats.completedGoals / 7).toFixed(1) : 0}</span>
-                            <span className="ld-insight-desc">Tasks completed per day on average this week.</span>
-                        </div>
-                    </div>
-                </motion.section>
-
-                {/* Extended History / Activity Feed */}
-                <motion.section className="ld-card"
-                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
-                    <div className="ld-section-title" style={{ marginBottom: '1.5rem' }}>
-                        <Layers size={18} color="#ec4899" />
-                        <h2>Detailed Activity Feed</h2>
-                    </div>
-                    <div className="ld-timeline">
-                        {stats?.recentActivity?.length > 0 ? stats.recentActivity.map((a, i) => (
-                            <div key={i} className="ld-activity-item" style={{ marginBottom: '1.25rem' }}>
-                                <div className="ld-activity-dot"
-                                    style={{
-                                        background: a.type === 'task' ? '#6366f1' : a.type === 'journal' ? '#10b981' : '#f59e0b',
-                                        width: '12px', height: '12px', marginTop: '6px'
-                                    }} />
-                                <div className="ld-activity-text">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <strong style={{ fontSize: '0.95rem' }}>{a.title}</strong>
-                                        <ArrowUpRight size={12} color="var(--text-muted)" />
-                                    </div>
-                                    <span style={{ fontSize: '0.78rem' }}>
-                                        {new Date(a.date).toLocaleDateString('en-US', {
-                                            weekday: 'short', month: 'short', day: 'numeric',
-                                            hour: '2-digit', minute: '2-digit'
-                                        })}
-                                    </span>
-                                </div>
-                            </div>
-                        )) : (
-                            <p className="ld-empty">No detailed activity records yet.</p>
-                        )}
-                    </div>
-                </motion.section>
-
-                {/* Mini Visualization / Shield */}
-                <motion.section className="ld-card"
-                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}>
-                    <div className="ld-section-title" style={{ marginBottom: '1.5rem' }}>
-                        <Shield size={18} color="#10b981" />
-                        <h2>System Health</h2>
-                    </div>
-                    <div style={{ padding: '1rem', textAlign: 'center' }}>
-                        <div style={{ position: 'relative', display: 'inline-block' }}>
-                            <PieChart size={120} color="var(--primary-light)" strokeWidth={1} />
-                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                                <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
-                                    {todayHabitsTotal > 0 ? Math.round((todayHabitsDone / todayHabitsTotal) * 100) : 100}%
-                                </span>
-                            </div>
-                        </div>
-                        <p style={{ marginTop: '1.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                            You've completed <strong>{todayHabitsDone}</strong> of your <strong>{todayHabitsTotal}</strong> habits today.
-                            {todayHabitsDone === todayHabitsTotal ? " Perfect score!" : " Keep pushing to finish the list."}
-                        </p>
-                    </div>
-                </motion.section>
+                    </ResponsiveGridLayout>
+                )}
             </div>
             {/* Manual Entry Modal */}
             <AnimatePresence>
@@ -671,7 +721,7 @@ const LearningDashboard = () => {
                     </div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 };
 

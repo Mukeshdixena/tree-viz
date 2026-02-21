@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, CheckSquare, BookOpen, StickyNote, BarChart2, LogOut, Moon, Sun, Clock } from 'lucide-react';
+import { Target, CheckSquare, BookOpen, StickyNote, BarChart2, LogOut, Moon, Sun, Clock, MessageSquare } from 'lucide-react';
 import './GlobalSidebar.css';
 
 const GlobalSidebar = ({ activeTab, onTabChange, onLogout, isDark, toggleTheme }) => {
@@ -10,6 +10,7 @@ const GlobalSidebar = ({ activeTab, onTabChange, onLogout, isDark, toggleTheme }
         { id: 'journal', label: 'Journal', icon: BookOpen },
         { id: 'notes', label: 'Notes', icon: StickyNote },
         { id: 'stats', label: 'Progress Hub', icon: BarChart2 },
+        { id: 'ai', label: 'AI Chat', icon: MessageSquare },
     ];
 
     return (

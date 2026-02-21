@@ -60,5 +60,9 @@ export const api = {
             return null;
         }
         return response.json();
+    },
+
+    async aiChat(messages) {
+        return this.post('/ai/chat', { messages });
     }
 };

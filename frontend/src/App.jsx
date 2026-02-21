@@ -8,6 +8,7 @@ import JournalEntry from './components/Journal/JournalEntry';
 import NotesManager from './components/Notes/NotesManager';
 import LearningDashboard from './components/Stats/LearningDashboard';
 import DayPlanner from './components/Planner/DayPlanner';
+import AiChatbot from './components/AI/AiChatbot';
 
 import './App.css';
 
@@ -52,8 +53,8 @@ const MainLayout = ({ isDark, toggleTheme }) => {
           <Route path="/journal" element={<JournalEntry />} />
           <Route path="/planner" element={<DayPlanner />} />
           <Route path="/notes" element={<NotesManager />} />
-
           <Route path="/stats" element={<LearningDashboard />} />
+          <Route path="/ai" element={<AiChatbot />} />
         </Routes>
       </div>
     </div>

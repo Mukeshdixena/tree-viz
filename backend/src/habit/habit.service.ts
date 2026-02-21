@@ -20,9 +20,10 @@ export class HabitService {
     }
 
     async update(userId: string, id: string, data: any): Promise<Habit> {
+        const { _id, userId: uId, createdAt, updatedAt, ...updateData } = data;
         return this.habitModel.findOneAndUpdate(
             { _id: new Types.ObjectId(id), userId: new Types.ObjectId(userId) },
-            { $set: data },
+            { $set: updateData },
             { new: true }
         ).exec();
     }

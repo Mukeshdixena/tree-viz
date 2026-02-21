@@ -20,9 +20,10 @@ export class RoutineService {
     }
 
     async update(userId: string, id: string, data: any): Promise<Routine> {
+        const { _id, userId: uId, createdAt, updatedAt, ...updateData } = data;
         return this.routineModel.findOneAndUpdate(
             { _id: new Types.ObjectId(id), userId: new Types.ObjectId(userId) },
-            { $set: data },
+            { $set: updateData },
             { new: true }
         ).exec();
     }
@@ -88,6 +89,29 @@ export class RoutineService {
                     blocks: [
                         { startTime: "05:00", endTime: "06:00", plan: "Meditation", tag: 'meditation', target: '' },
                         { startTime: "06:00", endTime: "09:00", plan: "Deep Work", tag: 'work', target: '3h' },
+                    ]
+                },
+                {
+                    name: 'Success Morning Blueprint',
+                    icon: 'Sunrise',
+                    blocks: [
+                        { startTime: "04:00", endTime: "04:05", plan: "Wake up + wash face", tag: "rest", target: "Reduce sleep inertia" },
+                        { startTime: "04:05", endTime: "04:15", plan: "Exercise (10 min)", tag: "fitness", target: "Activate body, increase circulation" },
+                        { startTime: "04:15", endTime: "05:05", plan: "Meditation (50 min)", tag: "meditation", target: "Deep parasympathetic regulation and mental clarity" },
+                        { startTime: "05:05", endTime: "05:10", plan: "Drink water", tag: "rest", target: "Rehydrate after meditation" },
+                        { startTime: "05:10", endTime: "05:20", plan: "Brush + fresh", tag: "rest", target: "Oral hygiene and alertness" },
+                        { startTime: "05:20", endTime: "05:35", plan: "Shower", tag: "rest", target: "Physical reset and readiness" },
+                        { startTime: "05:35", endTime: "06:00", plan: "Get ready (dress, bag, prep)", tag: "rest", target: "Calm preparation without rush" },
+                        { startTime: "06:00", endTime: "06:30", plan: "Buffer time", tag: "rest", target: "Avoid stress and last-minute delays" },
+                        { startTime: "06:30", endTime: "07:00", plan: "Commute to office", tag: "work", target: "Arrive on time" },
+
+                        { startTime: "07:00", endTime: "09:30", plan: "Primary deep work block (office)", tag: "work", target: "High-focus execution and important tasks" },
+                        { startTime: "09:30", endTime: "19:30", plan: "Office work + breakfast/lunch", tag: "work", target: "Operational tasks, meetings, delivery" },
+
+                        { startTime: "19:30", endTime: "20:00", plan: "Dinner + decompress", tag: "rest", target: "Recover from workday" },
+                        { startTime: "20:00", endTime: "22:00", plan: "Second work block (DSA / Spring Boot / Scaler)", tag: "study", target: "Skill growth and career upgrade" },
+
+                        { startTime: "22:00", endTime: "22:30", plan: "Wind down + sleep", tag: "rest", target: "Recovery for 4 AM wake-up" }
                     ]
                 }
             ];

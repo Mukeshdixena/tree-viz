@@ -199,6 +199,22 @@ const DayPlanner = () => {
         return entries.reduce((acc, curr) => acc + curr.value, 0);
     };
 
+    const updateDayTask = (idx, field, val) => {
+        const newDayTasks = [...(planner.dayTasks || [])];
+        newDayTasks[idx][field] = val;
+        setPlanner({ ...planner, dayTasks: newDayTasks });
+    };
+
+    const addDayTask = () => {
+        const newDayTasks = [...(planner.dayTasks || []), { taskId: '', progressMade: 0 }];
+        setPlanner({ ...planner, dayTasks: newDayTasks });
+    };
+
+    const removeDayTask = (idx) => {
+        const newDayTasks = (planner.dayTasks || []).filter((_, i) => i !== idx);
+        setPlanner({ ...planner, dayTasks: newDayTasks });
+    };
+
     const updateBlockCompletion = (index, value) => {
         const newBlocks = [...planner.blocks];
         newBlocks[index].completed = value;
@@ -686,70 +702,162 @@ const DayPlanner = () => {
 
             <main className="planner-main-container">
                 {viewMode === 'day' && (
-                    <div className="habits-overview">
-                        <div className="habits-label">
-                            <Flame size={18} />
-                            <span>Today's Habits</span>
-                        </div>
-                        <div className="habits-chips-list">
-                            {habits.map(habit => {
-                                const dayTotal = getHabitDayTotal(habit.logs, selectedDate);
-                                const isDone = dayTotal > 0;
-                                return (
-                                    <div key={habit._id} className="habit-chip-container">
-                                        <button
-                                            className={`habit-chip ${isDone ? 'done' : ''}`}
-                                            style={{ '--habit-color': habit.color, '--habit-bg': habit.color + '20' }}
-                                            onClick={() => toggleHabit(habit)}
-                                        >
-                                            <div className="habit-icon-mini">
-                                                <Zap size={14} />
-                                            </div>
-                                            <div className="habit-info-mini">
-                                                <span className="habit-name-mini">{habit.name}</span>
+                    <>
+                        <div className="habits-overview">
+                            <div className="habits-label">
+                                <Flame size={18} />
+                                <span>Today's Habits</span>
+                            </div>
+                            <div className="habits-chips-list">
+                                {habits.map(habit => {
+                                    const dayTotal = getHabitDayTotal(habit.logs, selectedDate);
+                                    const isDone = dayTotal > 0;
+                                    return (
+                                        <div key={habit._id} className="habit-chip-container">
+                                            <button
+                                                className={`habit-chip ${isDone ? 'done' : ''}`}
+                                                style={{ '--habit-color': habit.color, '--habit-bg': habit.color + '20' }}
+                                                onClick={() => toggleHabit(habit)}
+                                            >
+                                                <div className="habit-icon-mini">
+                                                    <Zap size={14} />
+                                                </div>
+                                                <div className="habit-info-mini">
+                                                    <span className="habit-name-mini">{habit.name}</span>
+                                                    {habit.trackingType !== 'none' && (
+                                                        <span className="habit-progress-mini">
+                                                            {dayTotal}{habit.trackingType === 'hours' ? 'h' : ''}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {habit.trackingType === 'none' && (isDone ? <CheckCircle2 size={16} /> : <Circle size={16} />)}
                                                 {habit.trackingType !== 'none' && (
-                                                    <span className="habit-progress-mini">
-                                                        {dayTotal}{habit.trackingType === 'hours' ? 'h' : ''}
-                                                    </span>
+                                                    <div
+                                                        className="habit-edit-val-btn"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setManualHabitLog({ habitId: habit._id, name: habit.name, value: dayTotal, date: selectedDate });
+                                                        }}
+                                                    >
+                                                        <Edit3 size={14} />
+                                                    </div>
                                                 )}
-                                            </div>
-                                            {habit.trackingType === 'none' && (isDone ? <CheckCircle2 size={16} /> : <Circle size={16} />)}
+                                            </button>
+
                                             {habit.trackingType !== 'none' && (
-                                                <div
-                                                    className="habit-edit-val-btn"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setManualHabitLog({ habitId: habit._id, name: habit.name, value: dayTotal, date: selectedDate });
-                                                    }}
-                                                >
-                                                    <Edit3 size={14} />
+                                                <div className="habit-quick-actions">
+                                                    {habit.trackingType === 'count' ? (
+                                                        <div className="quick-btn-group">
+                                                            <button onClick={() => logHabitProgress(habit._id, 1)}>+1</button>
+                                                            <button onClick={() => logHabitProgress(habit._id, 5)}>+5</button>
+                                                            <button className="reset-btn" onClick={() => api.post(`/habits/${habit._id}/toggle`, { date: selectedDate }).then(fetchHabits)} title="Reset Today">×</button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="quick-btn-group">
+                                                            <button onClick={() => logHabitProgress(habit._id, 0.5)}>+30m</button>
+                                                            <button onClick={() => logHabitProgress(habit._id, 1)}>+1h</button>
+                                                            <button className="reset-btn" onClick={() => api.post(`/habits/${habit._id}/toggle`, { date: selectedDate }).then(fetchHabits)} title="Reset Today">×</button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
-                                        </button>
+                                        </div>
+                                    );
+                                })}
+                                {habits.length === 0 && <span className="no-habits-text">No habits tracked yet. Add some in the Habit Tracker!</span>}
+                            </div>
+                        </div>
 
-                                        {habit.trackingType !== 'none' && (
-                                            <div className="habit-quick-actions">
-                                                {habit.trackingType === 'count' ? (
-                                                    <div className="quick-btn-group">
-                                                        <button onClick={() => logHabitProgress(habit._id, 1)}>+1</button>
-                                                        <button onClick={() => logHabitProgress(habit._id, 5)}>+5</button>
-                                                        <button className="reset-btn" onClick={() => api.post(`/habits/${habit._id}/toggle`, { date: selectedDate }).then(fetchHabits)} title="Reset Today">×</button>
+                        <div className="day-tasks-overview">
+                            <div className="habits-label">
+                                <CheckCircle2 size={18} />
+                                <span>Task Progress</span>
+                            </div>
+                            <div className="day-tasks-grid">
+                                <AnimatePresence>
+                                    {(planner.dayTasks || []).map((dt, idx) => {
+                                        const linkedTask = tasks.find(t => t._id === dt.taskId);
+                                        const overallProgress = linkedTask ? Math.round((linkedTask.targetCurrent / linkedTask.targetTotal) * 100) : 0;
+
+                                        return (
+                                            <motion.div
+                                                key={idx}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.95 }}
+                                                className="day-task-card"
+                                            >
+                                                <div className="card-header-row">
+                                                    <select
+                                                        value={dt.taskId || ''}
+                                                        onChange={(e) => updateDayTask(idx, 'taskId', e.target.value)}
+                                                        className="day-task-select"
+                                                    >
+                                                        <option value="">Select Task...</option>
+                                                        {tasks.filter(t => t.status !== 'done').map(t => (
+                                                            <option key={t._id} value={t._id}>{t.title}</option>
+                                                        ))}
+                                                    </select>
+                                                    <button onClick={() => removeDayTask(idx)} className="day-task-remove-btn">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+
+                                                <div className="card-input-row">
+                                                    <div className="input-with-label">
+                                                        <label>Logged Today</label>
+                                                        <div className="mini-progress-input">
+                                                            <input
+                                                                type="number"
+                                                                value={dt.progressMade || ''}
+                                                                onChange={(e) => updateDayTask(idx, 'progressMade', parseInt(e.target.value) || 0)}
+                                                                placeholder="0"
+                                                            />
+                                                            <span className="unit-label">{linkedTask?.targetValue || 'pts'}</span>
+                                                        </div>
                                                     </div>
-                                                ) : (
-                                                    <div className="quick-btn-group">
-                                                        <button onClick={() => logHabitProgress(habit._id, 0.5)}>+30m</button>
-                                                        <button onClick={() => logHabitProgress(habit._id, 1)}>+1h</button>
-                                                        <button className="reset-btn" onClick={() => api.post(`/habits/${habit._id}/toggle`, { date: selectedDate }).then(fetchHabits)} title="Reset Today">×</button>
+
+                                                    {linkedTask && (
+                                                        <div className="overall-summary">
+                                                            <label>Total Cap</label>
+                                                            <div className="summary-val">
+                                                                <span>{linkedTask.targetCurrent}</span>
+                                                                <span className="divider">/</span>
+                                                                <span>{linkedTask.targetTotal}</span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {linkedTask && (
+                                                    <div className="card-footer-progress">
+                                                        <div className="mini-progress-track">
+                                                            <motion.div
+                                                                className="mini-progress-fill"
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: `${Math.min(overallProgress, 100)}%` }}
+                                                                transition={{ duration: 1, ease: "easeOut" }}
+                                                            />
+                                                        </div>
+                                                        <span className="progress-percent">{overallProgress}%</span>
                                                     </div>
                                                 )}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                            {habits.length === 0 && <span className="no-habits-text">No habits tracked yet. Add some in the Habit Tracker!</span>}
+                                            </motion.div>
+                                        );
+                                    })}
+                                </AnimatePresence>
+                                <motion.button
+                                    whileHover={{ scale: 1.02, backgroundColor: 'var(--bg-secondary)' }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={addDayTask}
+                                    className="day-task-add-card"
+                                >
+                                    <PlusCircle size={20} />
+                                    <span>Log Progress</span>
+                                </motion.button>
+                            </div>
                         </div>
-                    </div>
+                    </>
                 )}
                 <div className="planner-main">
                     {viewMode === 'day' ? (

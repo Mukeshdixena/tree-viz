@@ -33,6 +33,17 @@ class TimeBlock {
 
 const TimeBlockSchema = SchemaFactory.createForClass(TimeBlock);
 
+@Schema()
+class DayTask {
+    @Prop({ type: Types.ObjectId, ref: 'Task', required: true })
+    taskId: Types.ObjectId;
+
+    @Prop({ default: 0 })
+    progressMade: number;
+}
+
+const DayTaskSchema = SchemaFactory.createForClass(DayTask);
+
 @Schema({ timestamps: true })
 export class Planner extends Document {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true })
@@ -43,6 +54,9 @@ export class Planner extends Document {
 
     @Prop({ type: [TimeBlockSchema], default: [] })
     blocks: TimeBlock[];
+
+    @Prop({ type: [DayTaskSchema], default: [] })
+    dayTasks: any[];
 
     @Prop({ default: '' })
     summary: string;

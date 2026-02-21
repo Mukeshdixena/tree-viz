@@ -31,7 +31,7 @@ export class PlannerService {
 
 
     async update(userId: string, date: string, data: any): Promise<any> {
-        const { blocks, summary, wakeUpTime } = data;
+        const { blocks, summary, wakeUpTime, dayTasks } = data;
 
         // Find existing planner to track tasks that might be removed
         const oldPlanner = await this.plannerModel.findOne({
@@ -44,11 +44,16 @@ export class PlannerService {
             oldPlanner.blocks.forEach(b => {
                 if (b.taskId) taskIdsToUpdate.add(b.taskId.toString());
             });
+            if (oldPlanner.dayTasks) {
+                oldPlanner.dayTasks.forEach(t => {
+                    if (t.taskId) taskIdsToUpdate.add(t.taskId.toString());
+                });
+            }
         }
 
         const updatedPlanner = await this.plannerModel.findOneAndUpdate(
             { userId: new Types.ObjectId(userId), date },
-            { $set: { blocks: blocks || [], summary: summary || '', wakeUpTime: wakeUpTime || '' } },
+            { $set: { blocks: blocks || [], summary: summary || '', wakeUpTime: wakeUpTime || '', dayTasks: dayTasks || [] } },
             { new: true, upsert: true }
         ).exec();
 
@@ -56,6 +61,11 @@ export class PlannerService {
         if (blocks) {
             blocks.forEach(block => {
                 if (block.taskId) taskIdsToUpdate.add(block.taskId.toString());
+            });
+        }
+        if (dayTasks) {
+            dayTasks.forEach(t => {
+                if (t.taskId) taskIdsToUpdate.add(t.taskId.toString());
             });
         }
 
@@ -75,7 +85,9 @@ export class PlannerService {
             userId: new Types.ObjectId(userId),
             $or: [
                 { 'blocks.taskId': taskId },
-                { 'blocks.taskId': new Types.ObjectId(taskId) }
+                { 'blocks.taskId': new Types.ObjectId(taskId) },
+                { 'dayTasks.taskId': taskId },
+                { 'dayTasks.taskId': new Types.ObjectId(taskId) }
             ]
         }).exec();
 
@@ -86,6 +98,13 @@ export class PlannerService {
                     totalProgress += b.progressMade || 0;
                 }
             });
+            if (p.dayTasks) {
+                p.dayTasks.forEach(t => {
+                    if (t.taskId && t.taskId.toString() === taskId.toString()) {
+                        totalProgress += t.progressMade || 0;
+                    }
+                });
+            }
         });
 
         const task = await this.taskModel.findById(taskId);

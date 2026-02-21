@@ -21,8 +21,8 @@ class TimeBlock {
     @Prop({ default: '' })
     tag: string;
 
-    @Prop({ default: false })
-    completed: boolean;
+    @Prop({ default: 0 })
+    completed: number; // 0 to 100
 
     @Prop({ type: Types.ObjectId, ref: 'Task', default: null })
     taskId: Types.ObjectId;

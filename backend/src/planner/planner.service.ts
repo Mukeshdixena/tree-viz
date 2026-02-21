@@ -117,7 +117,7 @@ export class PlannerService {
         return planners.map(p => ({
             date: p.date,
             totalBlocks: p.blocks.length,
-            completedBlocks: p.blocks.filter(b => b.completed).length,
+            completedBlocks: p.blocks.reduce((acc, b) => acc + (Number(b.completed) || 0) / 100, 0),
             tags: Array.from(new Set(p.blocks.map(b => b.tag).filter(t => t && t !== 'none'))),
             wakeUpTime: p.wakeUpTime || ''
         }));

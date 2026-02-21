@@ -21,6 +21,14 @@
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+  /* Completion Variables - Light */
+  --completion-100: #10b981;
+  --completion-75: #3b82f6;
+  --completion-50: #6366f1;
+  --completion-thumb: #ffffff;
+  --completion-bg-100: #f0fdf4;
+  --completion-bg-partial: #eff6ff;
 }
 
 body.dark-mode {
@@ -55,6 +63,19 @@ body.dark-mode {
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+
+  /* Completion Variables - Dark */
+  --completion-100: #34d399;
+  /* Emerald 400 - more vibrant on dark */
+  --completion-75: #60a5fa;
+  /* Blue 400 */
+  --completion-50: #818cf8;
+  /* Indigo 400 */
+  --completion-thumb: #e5e5e5;
+  --completion-bg-100: #064e3b;
+  /* Solid Dark Emerald */
+  --completion-bg-partial: #1e3a8a;
+  /* Solid Dark Blue */
 }
 
 * {

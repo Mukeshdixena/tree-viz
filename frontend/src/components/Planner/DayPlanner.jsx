@@ -199,9 +199,9 @@ const DayPlanner = () => {
         return entries.reduce((acc, curr) => acc + curr.value, 0);
     };
 
-    const toggleBlockStatus = (index) => {
+    const updateBlockCompletion = (index, value) => {
         const newBlocks = [...planner.blocks];
-        newBlocks[index].completed = !newBlocks[index].completed;
+        newBlocks[index].completed = value;
         handleUpdate({ ...planner, blocks: newBlocks });
     };
 
@@ -234,7 +234,7 @@ const DayPlanner = () => {
             tag: 'none',
             target: '',
             reality: '',
-            completed: false
+            completed: 0
         }];
         setPlanner({ ...planner, blocks: newBlocks });
         setSelectedBlockIndex(newBlocks.length - 1);
@@ -255,7 +255,7 @@ const DayPlanner = () => {
             const newBlocks = routine.blocks.map(b => ({
                 ...b,
                 reality: '',
-                completed: false
+                completed: 0
             }));
             setPlanner({ ...planner, blocks: newBlocks });
             setShowRoutines(false);
@@ -366,10 +366,11 @@ const DayPlanner = () => {
 
     const calculateProgress = () => {
         if (!planner || !planner.blocks || !planner.blocks.length) return 0;
-        const total = planner.blocks.filter(b => b.plan.trim() !== '').length;
+        const validBlocks = planner.blocks.filter(b => b.plan.trim() !== '');
+        const total = validBlocks.length;
         if (total === 0) return 0;
-        const completed = planner.blocks.filter(b => b.plan.trim() !== '' && b.completed).length;
-        return Math.round((completed / total) * 100);
+        const totalCompletion = validBlocks.reduce((acc, b) => acc + (Number(b.completed) || 0), 0);
+        return Math.round(totalCompletion / total);
     };
 
     const changeDate = (days) => {
@@ -757,7 +758,7 @@ const DayPlanner = () => {
                                 {planner.blocks?.map((block, index) => (
                                     <motion.div
                                         key={index}
-                                        className={`time-block ${selectedBlockIndex === index ? 'active' : ''} ${block.completed ? 'completed' : ''}`}
+                                        className={`time-block ${selectedBlockIndex === index ? 'active' : ''} ${block.completed === 100 ? 'completed' : ''} ${block.completed > 0 && block.completed < 100 ? 'partial' : ''}`}
                                         onClick={() => setSelectedBlockIndex(index)}
                                     >
                                         <div className="time-col">
@@ -802,13 +803,6 @@ const DayPlanner = () => {
 
                                         <div className="block-actions">
                                             <button
-                                                className={`status-toggle ${block.completed ? 'is-done' : ''}`}
-                                                onClick={(e) => { e.stopPropagation(); toggleBlockStatus(index); }}
-                                                title={block.completed ? "Mark as incomplete" : "Mark as completed"}
-                                            >
-                                                {block.completed ? <CheckCircle2 size={22} /> : <Circle size={22} />}
-                                            </button>
-                                            <button
                                                 className="delete-block-btn"
                                                 onClick={(e) => { e.stopPropagation(); removeBlock(index); }}
                                                 title="Delete block"
@@ -844,6 +838,36 @@ const DayPlanner = () => {
                                                 <Clock size={16} />
                                                 <span>{planner.blocks[selectedBlockIndex].startTime} - {planner.blocks[selectedBlockIndex].endTime}</span>
                                             </div>
+
+                                            <div className="completion-status-sidebar">
+                                                <div className="label-row">
+                                                    <label>Completion Status</label>
+                                                    <span className="percent-display">{planner.blocks[selectedBlockIndex].completed}%</span>
+                                                </div>
+                                                <div className="slider-container">
+                                                    <input
+                                                        type="range"
+                                                        min="0"
+                                                        max="100"
+                                                        step="5"
+                                                        value={planner.blocks[selectedBlockIndex].completed || 0}
+                                                        onChange={(e) => updateBlockCompletion(selectedBlockIndex, parseInt(e.target.value))}
+                                                        className="completion-slider"
+                                                        style={{
+                                                            '--progress': `${planner.blocks[selectedBlockIndex].completed}%`,
+                                                            '--slider-active-color': planner.blocks[selectedBlockIndex].completed === 100 ? 'var(--completion-100)' :
+                                                                planner.blocks[selectedBlockIndex].completed >= 50 ? 'var(--completion-75)' :
+                                                                    planner.blocks[selectedBlockIndex].completed > 0 ? 'var(--completion-50)' : 'var(--text-muted)'
+                                                        }}
+                                                    />
+                                                    <div className="slider-track-marks">
+                                                        {[0, 25, 50, 75, 100].map(mark => (
+                                                            <span key={mark} className="mark"></span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div className="reality-section">
                                                 <div className="task-link-group">
                                                     <label>Link to Task</label>

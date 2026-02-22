@@ -556,6 +556,17 @@ const DayPlanner = () => {
                                         <span>{new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
                                     </div>
                                     <button onClick={() => changeDate(1)} className="date-nav-btn"><ChevronRight size={20} /></button>
+
+                                    <div className="wake-up-mini">
+                                        <div className="wake-up-divider"></div>
+                                        <Sunrise size={18} className="wake-up-icon" />
+                                        <input
+                                            type="time"
+                                            value={planner?.wakeUpTime || ''}
+                                            onChange={(e) => setPlanner({ ...planner, wakeUpTime: e.target.value })}
+                                            className="wake-up-input"
+                                        />
+                                    </div>
                                 </>
                             ) : (
                                 <>
@@ -572,22 +583,6 @@ const DayPlanner = () => {
 
 
 
-                    {viewMode === 'day' && (
-                        <div className="wake-up-section">
-                            <div className="wake-up-card">
-                                <Sunrise size={20} className="wake-up-icon" />
-                                <div className="wake-up-info">
-                                    <span className="wake-up-label">Wake Up Time</span>
-                                    <input
-                                        type="time"
-                                        value={planner?.wakeUpTime || ''}
-                                        onChange={(e) => setPlanner({ ...planner, wakeUpTime: e.target.value })}
-                                        className="wake-up-input"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 <div className="header-right">
@@ -836,95 +831,6 @@ const DayPlanner = () => {
                             </div>
                         </div>
 
-                        <div className="day-tasks-overview">
-                            <div className="habits-label">
-                                <CheckCircle2 size={18} />
-                                <span>Task Progress</span>
-                            </div>
-                            <div className="day-tasks-grid">
-                                <AnimatePresence>
-                                    {(planner.dayTasks || []).map((dt, idx) => {
-                                        const linkedTask = tasks.find(t => t._id === dt.taskId);
-                                        const overallProgress = linkedTask ? Math.round((linkedTask.targetCurrent / linkedTask.targetTotal) * 100) : 0;
-
-                                        return (
-                                            <motion.div
-                                                key={idx}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, scale: 0.95 }}
-                                                className="day-task-card"
-                                            >
-                                                <div className="card-header-row">
-                                                    <select
-                                                        value={dt.taskId || ''}
-                                                        onChange={(e) => updateDayTask(idx, 'taskId', e.target.value)}
-                                                        className="day-task-select"
-                                                    >
-                                                        <option value="">Select Task...</option>
-                                                        {tasks.filter(t => t.status !== 'done').map(t => (
-                                                            <option key={t._id} value={t._id}>{t.title}</option>
-                                                        ))}
-                                                    </select>
-                                                    <button onClick={() => removeDayTask(idx)} className="day-task-remove-btn">
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </div>
-
-                                                <div className="card-input-row">
-                                                    <div className="input-with-label">
-                                                        <label>Logged Today</label>
-                                                        <div className="mini-progress-input">
-                                                            <input
-                                                                type="number"
-                                                                value={dt.progressMade || ''}
-                                                                onChange={(e) => updateDayTask(idx, 'progressMade', parseInt(e.target.value) || 0)}
-                                                                placeholder="0"
-                                                            />
-                                                            <span className="unit-label">{linkedTask?.targetValue || 'pts'}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    {linkedTask && (
-                                                        <div className="overall-summary">
-                                                            <label>Total Cap</label>
-                                                            <div className="summary-val">
-                                                                <span>{linkedTask.targetCurrent}</span>
-                                                                <span className="divider">/</span>
-                                                                <span>{linkedTask.targetTotal}</span>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {linkedTask && (
-                                                    <div className="card-footer-progress">
-                                                        <div className="mini-progress-track">
-                                                            <motion.div
-                                                                className="mini-progress-fill"
-                                                                initial={{ width: 0 }}
-                                                                animate={{ width: `${Math.min(overallProgress, 100)}%` }}
-                                                                transition={{ duration: 1, ease: "easeOut" }}
-                                                            />
-                                                        </div>
-                                                        <span className="progress-percent">{overallProgress}%</span>
-                                                    </div>
-                                                )}
-                                            </motion.div>
-                                        );
-                                    })}
-                                </AnimatePresence>
-                                <motion.button
-                                    whileHover={{ scale: 1.02, backgroundColor: 'var(--bg-secondary)' }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={addDayTask}
-                                    className="day-task-add-card"
-                                >
-                                    <PlusCircle size={20} />
-                                    <span>Log Progress</span>
-                                </motion.button>
-                            </div>
-                        </div>
                     </>
                 )}
                 <div className="planner-main">

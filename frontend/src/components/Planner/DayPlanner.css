@@ -136,6 +136,20 @@
     transition: all 0.2s;
 }
 
+.wake-up-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-right: 0.75rem;
+}
+
+.wake-up-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-color);
+    margin: 0 0.5rem;
+}
+
 .wake-up-card:hover {
     border-color: var(--primary);
     background: var(--bg-secondary);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, CheckCircle2, Circle, Clock, ChevronLeft, ChevronRight, Save, Layout, Trash2, Plus, Zap, Coffee, Sunrise, Sun, Moon, Edit3, PlusCircle, Flame } from 'lucide-react';
+import { Calendar, CheckCircle2, Circle, Clock, ChevronLeft, ChevronRight, Save, Layout, Trash2, Plus, Zap, Coffee, Sunrise, Sun, Moon, Edit3, PlusCircle, Flame, Sparkles, Send } from 'lucide-react';
 import Modal from '../Modal';
 import { api } from '../../api';
 import { subscribeToUpdates, unsubscribeFromUpdates } from '../../socket';
@@ -59,6 +59,10 @@ const DayPlanner = () => {
         onConfirm: () => { },
     });
     const [manualHabitLog, setManualHabitLog] = useState(null); // { habitId, name, value, date }
+    const [aiPlanPrompt, setAiPlanPrompt] = useState('');
+    const [isAiPlanning, setIsAiPlanning] = useState(false);
+    const [aiLogPrompt, setAiLogPrompt] = useState('');
+    const [isAiLogging, setIsAiLogging] = useState(false);
 
     const showModal = (config) => {
         setModal({
@@ -157,6 +161,68 @@ const DayPlanner = () => {
             }
         } catch (error) {
             console.error("Error updating planner:", error);
+        }
+    };
+
+    const handleAiPlan = async () => {
+        if (!aiPlanPrompt.trim()) return;
+        setIsAiPlanning(true);
+        try {
+            const hasExistingPlan = planner && planner.blocks && planner.blocks.length > 0;
+            const result = await api.post('/ai/generate-plan', {
+                prompt: aiPlanPrompt,
+                currentPlan: hasExistingPlan ? planner : null
+            });
+            if (result && result.blocks) {
+                const newPlanner = {
+                    ...planner,
+                    wakeUpTime: result.wakeUpTime || planner.wakeUpTime,
+                    blocks: result.blocks.map(b => ({
+                        ...b,
+                        reality: '',
+                        completed: 0,
+                        tag: b.tag || 'none'
+                    }))
+                };
+                setPlanner(newPlanner);
+                setAiPlanPrompt('');
+                // Optionally auto-save
+                // handleUpdate(newPlanner);
+            }
+        } catch (error) {
+            console.error("AI Planning failed:", error);
+            showModal({ title: 'AI Error', message: 'Failed to generate plan. Please try again.' });
+        } finally {
+            setIsAiPlanning(false);
+        }
+    };
+
+    const handleAiLog = async () => {
+        if (!aiLogPrompt.trim()) return;
+        setIsAiLogging(true);
+        try {
+            const result = await api.post('/ai/log-progress', {
+                plan: { blocks: planner.blocks },
+                prompt: aiLogPrompt
+            });
+
+            if (result && result.blocks) {
+                const newBlocks = [...planner.blocks];
+                result.blocks.forEach(update => {
+                    const idx = update.index;
+                    if (newBlocks[idx]) {
+                        newBlocks[idx].reality = update.reality;
+                        newBlocks[idx].completed = update.completed;
+                    }
+                });
+                setPlanner({ ...planner, blocks: newBlocks });
+                setAiLogPrompt('');
+            }
+        } catch (error) {
+            console.error("AI Logging failed:", error);
+            showModal({ title: 'AI Error', message: 'Failed to process AI progress log.' });
+        } finally {
+            setIsAiLogging(false);
         }
     };
 
@@ -503,6 +569,8 @@ const DayPlanner = () => {
                             )}
                         </div>
                     </div>
+
+
 
                     {viewMode === 'day' && (
                         <div className="wake-up-section">
@@ -863,6 +931,31 @@ const DayPlanner = () => {
                     {viewMode === 'day' ? (
                         <>
                             <div className="time-blocks-grid">
+                                <div className="ai-plan-input-container sticky-top">
+                                    <div className={`ai-input-wrapper ${isAiPlanning ? 'loading' : ''}`}>
+                                        <Sparkles size={20} className="ai-icon" />
+                                        <textarea
+                                            placeholder="What's your plan for today? Type it naturally..."
+                                            value={aiPlanPrompt}
+                                            onChange={(e) => setAiPlanPrompt(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    handleAiPlan();
+                                                }
+                                            }}
+                                            disabled={isAiPlanning}
+                                            className="ai-textarea"
+                                        />
+                                        <button
+                                            className="ai-send-btn"
+                                            onClick={handleAiPlan}
+                                            disabled={isAiPlanning || !aiPlanPrompt.trim()}
+                                        >
+                                            {isAiPlanning ? <div className="ai-spinner-small"></div> : <Send size={18} />}
+                                        </button>
+                                    </div>
+                                </div>
                                 {planner.blocks?.map((block, index) => (
                                     <motion.div
                                         key={index}
@@ -877,7 +970,7 @@ const DayPlanner = () => {
                                                 onClick={(e) => e.stopPropagation()}
                                                 className="time-input"
                                             />
-                                            <div className="duration-tag">{getDuration(block.startTime, block.endTime)}</div>
+                                            <span className="time-sep">-</span>
                                             <input
                                                 type="time"
                                                 value={block.endTime}
@@ -895,18 +988,6 @@ const DayPlanner = () => {
                                                 onChange={(e) => updateBlockText(index, 'plan', e.target.value)}
                                                 className="plan-input"
                                             />
-                                            <div className="quick-presets">
-                                                {PRESETS.map((p, pIdx) => (
-                                                    <button
-                                                        key={pIdx}
-                                                        className="preset-btn"
-                                                        onClick={(e) => { e.stopPropagation(); applyPreset(index, p); }}
-                                                        title={`Assign ${p.label}`}
-                                                    >
-                                                        {ICON_MAP[p.icon] || <Zap size={14} />}
-                                                    </button>
-                                                ))}
-                                            </div>
                                         </div>
 
                                         <div className="block-actions">
@@ -933,6 +1014,31 @@ const DayPlanner = () => {
                             </div>
 
                             <aside className="reality-sidebar">
+                                <div className="ai-log-input-container sticky-top">
+                                    <div className={`ai-input-wrapper ${isAiLogging ? 'loading' : ''}`}>
+                                        <Sparkles size={18} className="ai-icon" />
+                                        <textarea
+                                            placeholder="What did you achieve? (e.g. I did the work session and 1hr gym)"
+                                            value={aiLogPrompt}
+                                            onChange={(e) => setAiLogPrompt(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    handleAiLog();
+                                                }
+                                            }}
+                                            disabled={isAiLogging}
+                                            className="ai-textarea"
+                                        />
+                                        <button
+                                            className="ai-send-btn"
+                                            onClick={handleAiLog}
+                                            disabled={isAiLogging || !aiLogPrompt.trim()}
+                                        >
+                                            {isAiLogging ? <div className="ai-spinner-small"></div> : <Send size={14} />}
+                                        </button>
+                                    </div>
+                                </div>
                                 <AnimatePresence mode="wait">
                                     {selectedBlockIndex !== null ? (
                                         <motion.div

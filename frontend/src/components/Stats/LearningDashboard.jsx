@@ -4,11 +4,61 @@ import {
     Book, Clock, Trophy, Target, Zap, Flame, CheckCircle2,
     ChevronLeft, ChevronRight, Calendar, BarChart2,
     Star, TrendingUp, BookOpen, Brain, Coffee, Plus, Trash2, Edit3,
-    Activity, Shield, PieChart, Layers, ArrowUpRight, ZapOff, Heart, Sunrise
+    Activity, Shield, PieChart, Layers, ArrowUpRight, ZapOff, Heart, Sunrise,
+    AlertTriangle, Award, XCircle
 } from 'lucide-react';
 import { api } from '../../api';
 import { subscribeToUpdates, unsubscribeFromUpdates } from '../../socket';
 import './LearningDashboard.css';
+
+// ── Discipline Score Ring ──────────────────────────────────────────────
+const DisciplineScoreRing = ({ score, color }) => {
+    const r = 52;
+    const circ = 2 * Math.PI * r;
+    return (
+        <div className="ld-disc-ring-wrap">
+            <svg width="130" height="130" viewBox="0 0 130 130">
+                <circle cx="65" cy="65" r={r} fill="none" stroke="var(--bg-tertiary)" strokeWidth="10" />
+                <motion.circle
+                    cx="65" cy="65" r={r} fill="none"
+                    stroke={color}
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                    strokeDasharray={circ}
+                    strokeDashoffset={circ}
+                    animate={{ strokeDashoffset: circ - (score / 100) * circ }}
+                    transition={{ duration: 1.5, ease: 'easeOut', delay: 0.4 }}
+                    transform="rotate(-90 65 65)"
+                    style={{ filter: `drop-shadow(0 0 10px ${color}80)` }}
+                />
+                <text x="65" y="60" textAnchor="middle" fontSize="28" fontWeight="800" fill="var(--text-primary)">{score}</text>
+                <text x="65" y="78" textAnchor="middle" fontSize="12" fill="var(--text-muted)">/100</text>
+            </svg>
+        </div>
+    );
+};
+
+// ── Sub-Score Bar ─────────────────────────────────────────────────────
+const SubScoreBar = ({ label, value, color, weight, delay }) => (
+    <div className="ld-sub-score">
+        <div className="ld-sub-score-header">
+            <span>{label}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className="ld-sub-score-weight">{weight}%</span>
+                <span style={{ color, fontWeight: 700, fontSize: '0.85rem' }}>{value}</span>
+            </div>
+        </div>
+        <div className="ld-sub-score-track">
+            <motion.div
+                className="ld-sub-score-fill"
+                style={{ background: color }}
+                initial={{ width: 0 }}
+                animate={{ width: `${value}%` }}
+                transition={{ duration: 1, ease: 'easeOut', delay }}
+            />
+        </div>
+    </div>
+);
 
 const ICON_MAP = {
     Zap: Zap,
@@ -90,8 +140,21 @@ const WeekBar = ({ day, value, max, color }) => (
 
 // ---- Main Component ----
 
+// ── Badge definitions ────────────────────────────────────────────────
+const BADGES = [
+    { id: 'streak7', icon: '🔥', label: '7-Day Streak', desc: '7 consecutive active days', check: (d) => d.streak >= 7 },
+    { id: 'streak30', icon: '🏆', label: '30-Day Warrior', desc: '30 consecutive active days', check: (d) => d.streak >= 30 },
+    { id: 'habits100', icon: '💯', label: 'Perfect Habits', desc: 'All habits done today', check: (d, s) => s && s.todayHabitsDone > 0 && s.todayHabitsDone === s.todayHabitsTotal },
+    { id: 'taskcrush', icon: '🎯', label: 'Task Crusher', desc: '10+ tasks completed', check: (d) => d.completedThisWeek >= 10 },
+    { id: 'discpro', icon: '⚡️', label: 'Discipline Pro', desc: 'Score 70+ for a week', check: (d) => d.disciplineScore >= 70 },
+    { id: 'planner80', icon: '📋', label: 'Planner Master', desc: 'Planner adherence > 80%', check: (d) => d.subScores?.plannerAdherence >= 80 },
+    { id: 'earlybird', icon: '🌅', label: 'Early Bird', desc: 'Avg wake before 6:30 AM', check: (d, s) => s && s.avgWakeUp !== '--:--' && (() => { const [h, m] = s.avgWakeUp.split(':').map(Number); return h * 60 + m <= 390; })() },
+    { id: 'consistent', icon: '🌟', label: 'Consistent', desc: 'Habit consistency > 90%', check: (d) => d.subScores?.habitConsistency >= 90 },
+];
+
 const LearningDashboard = () => {
     const [stats, setStats] = useState(null);
+    const [disciplineData, setDisciplineData] = useState(null);
     const [habits, setHabits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -105,12 +168,14 @@ const LearningDashboard = () => {
 
     const fetchAll = async () => {
         try {
-            const [statsData, habitsData] = await Promise.all([
+            const [statsData, habitsData, discData] = await Promise.all([
                 api.get('/stats/dashboard'),
                 api.get('/habits'),
+                api.get('/stats/discipline'),
             ]);
             if (statsData) setStats(statsData);
             if (habitsData) setHabits(habitsData);
+            if (discData) setDisciplineData(discData);
         } catch (err) {
             console.error('Failed to fetch dashboard data', err);
         } finally {
@@ -245,6 +310,15 @@ const LearningDashboard = () => {
     const bestStreak = habits.length > 0 ? Math.max(...habits.map(h => calcHabitStreak(h.logs))) : 0;
     const maxHabitTotal = stats?.habitStats?.length ? Math.max(...stats.habitStats.map(h => h.total), 1) : 1;
 
+    // Badge computation
+    const statsForBadges = { ...stats, todayHabitsDone, todayHabitsTotal: habits.length };
+    const earnedBadges = BADGES.filter(b => disciplineData ? b.check(disciplineData, statsForBadges) : false);
+
+    // Discipline score color
+    const discScore = disciplineData?.disciplineScore ?? 0;
+    const discColor = discScore >= 70 ? '#10b981' : discScore >= 40 ? '#f59e0b' : '#ef4444';
+    const discLabel = discScore >= 85 ? 'Excellent' : discScore >= 70 ? 'Strong' : discScore >= 55 ? 'Developing' : discScore >= 40 ? 'Struggling' : discScore >= 10 ? 'Critical' : 'No Data Yet';
+
     if (loading) {
         return (
             <div className="ld-loading">
@@ -269,6 +343,31 @@ const LearningDashboard = () => {
                     {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </div>
             </header>
+
+            {/* ── Discipline Score Card ── */}
+            {disciplineData && (
+                <motion.section className="ld-discipline-card"
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                    <div className="ld-disc-left">
+                        <DisciplineScoreRing score={discScore} color={discColor} />
+                        <div className="ld-disc-info">
+                            <span className="ld-disc-label-badge" style={{ background: discColor + '20', color: discColor }}>{discLabel}</span>
+                            <h2 className="ld-disc-title">Discipline Score</h2>
+                            <p className="ld-disc-sub">Computed from habit consistency, planner adherence, streak, and task velocity.</p>
+                            <div className="ld-disc-streak">
+                                <Flame size={16} color="#f59e0b" />
+                                <span>Current streak: <strong>{disciplineData.streak} days</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="ld-disc-right">
+                        <SubScoreBar label="Habit Consistency" value={disciplineData.subScores.habitConsistency} color="#f59e0b" weight={40} delay={0.5} />
+                        <SubScoreBar label="Planner Adherence" value={disciplineData.subScores.plannerAdherence} color="#3b82f6" weight={30} delay={0.6} />
+                        <SubScoreBar label="Streak Health" value={disciplineData.subScores.streakScore} color="#10b981" weight={20} delay={0.7} />
+                        <SubScoreBar label="Task Velocity" value={disciplineData.subScores.velocityScore} color="#8b5cf6" weight={10} delay={0.8} />
+                    </div>
+                </motion.section>
+            )}
 
             {/* ── Top Stats ── */}
             <section className="ld-stats-grid">
@@ -643,7 +742,96 @@ const LearningDashboard = () => {
                     </div>
                 </motion.section>
             </div>
+
+            {/* ── Where You're Falling Behind ── */}
+            {disciplineData && (disciplineData.failingHabits.length > 0 || disciplineData.failingPlannerDays.length > 0 || disciplineData.stuckTasks.length > 0) && (
+                <motion.section className="ld-failing-section"
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
+                    <div className="ld-section-title" style={{ marginBottom: '1.5rem' }}>
+                        <AlertTriangle size={20} color="#ef4444" />
+                        <h2 style={{ color: '#ef4444' }}>Where You're Falling Behind</h2>
+                    </div>
+                    <div className="ld-failing-grid">
+                        {disciplineData.failingHabits.length > 0 && (
+                            <div className="ld-failing-col">
+                                <h3 className="ld-failing-col-title">
+                                    <XCircle size={14} color="#ef4444" /> Habits Missed (3+ days)
+                                </h3>
+                                {disciplineData.failingHabits.map((h, i) => (
+                                    <motion.div key={i} className="ld-failing-item" style={{ borderLeftColor: h.color || '#ef4444' }}
+                                        initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 * i }}>
+                                        <span className="ld-failing-dot" style={{ background: h.color || '#ef4444' }} />
+                                        <span>{h.name}</span>
+                                        <span className="ld-failing-days">0 / 3 days</span>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+                        {disciplineData.failingPlannerDays.length > 0 && (
+                            <div className="ld-failing-col">
+                                <h3 className="ld-failing-col-title">
+                                    <XCircle size={14} color="#f59e0b" /> Weak Planner Days (&lt;50%)
+                                </h3>
+                                {disciplineData.failingPlannerDays.map((d, i) => (
+                                    <motion.div key={i} className="ld-failing-item" style={{ borderLeftColor: '#f59e0b' }}
+                                        initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 * i }}>
+                                        <span>{new Date(d.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                                        <span className="ld-failing-days" style={{ color: '#f59e0b' }}>{d.completion}% done</span>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+                        {disciplineData.stuckTasks.length > 0 && (
+                            <div className="ld-failing-col">
+                                <h3 className="ld-failing-col-title">
+                                    <XCircle size={14} color="#8b5cf6" /> Stuck Tasks (7+ days)
+                                </h3>
+                                {disciplineData.stuckTasks.map((t, i) => (
+                                    <motion.div key={i} className="ld-failing-item" style={{ borderLeftColor: '#8b5cf6' }}
+                                        initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 * i }}>
+                                        <span>{t.title}</span>
+                                        <span className="ld-failing-days" style={{ color: '#8b5cf6' }}>stalled</span>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </motion.section>
+            )}
+
+            {/* ── Achievement Badges ── */}
+            <motion.section className="ld-badges-section"
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}>
+                <div className="ld-section-title" style={{ marginBottom: '1.5rem' }}>
+                    <Award size={20} color="#f59e0b" />
+                    <h2>Achievement Badges</h2>
+                    <span className="ld-badge-count">{earnedBadges.length}/{BADGES.length} earned</span>
+                </div>
+                <div className="ld-badge-grid">
+                    {BADGES.map((badge, i) => {
+                        const earned = disciplineData ? badge.check(disciplineData, statsForBadges) : false;
+                        return (
+                            <motion.div
+                                key={badge.id}
+                                className={`ld-badge-card ${earned ? 'earned' : 'locked'}`}
+                                initial={{ opacity: 0, scale: 0.85 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.05 * i }}
+                                whileHover={{ y: earned ? -4 : 0 }}
+                                title={badge.desc}
+                            >
+                                <span className="ld-badge-icon">{badge.icon}</span>
+                                <span className="ld-badge-label">{badge.label}</span>
+                                <span className="ld-badge-desc">{badge.desc}</span>
+                                {earned && <div className="ld-badge-earned-glow" />}
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            </motion.section>
+
             {/* Manual Entry Modal */}
+
             <AnimatePresence>
                 {manualEntry && (
                     <div className="ld-modal-overlay">

@@ -40,4 +40,15 @@ export class AiController {
             throw new InternalServerErrorException(error.message || 'AI Service Error');
         }
     }
+
+    @Post('discipline-insights')
+    async disciplineInsights(@Body('context') context: any, @Body('question') question?: string) {
+        try {
+            if (!context) throw new Error('Context is required');
+            return await this.aiService.getDisciplineInsights(context, question);
+        } catch (error) {
+            this.logger.error(`AI Discipline Insights failed: ${error.message}`);
+            throw new InternalServerErrorException(error.message || 'AI Service Error');
+        }
+    }
 }

@@ -127,4 +127,51 @@ export class AiService {
             throw new Error("AI returned invalid JSON structure");
         }
     }
+    async getDisciplineInsights(context: {
+        disciplineScore: number;
+        subScores: { habitConsistency: number; plannerAdherence: number; streakScore: number; velocityScore: number };
+        streak: number;
+        failingHabits: { name: string; daysMissed: number }[];
+        failingPlannerDays: { date: string; completion: number }[];
+        stuckTasks: { title: string }[];
+        totalHabits: number;
+        completedThisWeek: number;
+    }, userQuestion?: string) {
+        const systemPrompt = `You are a strict, data-driven personal discipline coach. You have been given the user's behavioral data for the past 7 days.
+
+USER METRICS:
+- Overall Discipline Score: ${context.disciplineScore}/100
+- Habit Consistency: ${context.subScores.habitConsistency}/100 (40% weight)
+- Planner Adherence: ${context.subScores.plannerAdherence}/100 (30% weight)
+- Streak Health: ${context.subScores.streakScore}/100 — Current streak: ${context.streak} days (20% weight)
+- Task Velocity: ${context.subScores.velocityScore}/100 — Completed ${context.completedThisWeek} tasks this week (10% weight)
+
+FAILING HABITS (0 completions in last 3 days):
+${context.failingHabits.length > 0 ? context.failingHabits.map(h => `- ${h.name}`).join('\n') : '- None! Great job.'}
+
+WEAK PLANNER DAYS (< 50% completion):
+${context.failingPlannerDays.length > 0 ? context.failingPlannerDays.map(d => `- ${d.date}: ${d.completion}%`).join('\n') : '- None in the past 7 days.'}
+
+STUCK TASKS (no update in 7+ days):
+${context.stuckTasks.length > 0 ? context.stuckTasks.map(t => `- ${t.title}`).join('\n') : '- None.'}
+
+COACHING STYLE:
+- Be direct, specific, and brutally honest about failures.
+- Always cite the actual data (scores, habit names, dates).
+- Be encouraging but do not sugarcoat poor performance.
+- Provide 1-3 concrete, actionable steps.
+- Keep responses concise and punchy — this is a coaching dashboard, not an essay.
+- If score > 70: celebrate but push for excellence.
+- If score 40-70: identify the top 1-2 things dragging the score down.
+- If score < 40: firm intervention tone, prioritize the single most critical habit to fix immediately.`;
+
+        const messages = [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userQuestion || 'Give me a quick honest assessment of my discipline this week and tell me exactly what I need to focus on today.' }
+        ];
+
+        const response = await this.chat(messages);
+        return { content: response.content };
+    }
 }
+

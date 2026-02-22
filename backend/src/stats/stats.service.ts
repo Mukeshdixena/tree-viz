@@ -7,6 +7,17 @@ import { Tree } from '../tree/schemas/tree.schema';
 import { Habit } from '../habit/schemas/habit.schema';
 import { Planner } from '../planner/schemas/planner.schema';
 
+// Helper to get last N date strings (YYYY-MM-DD) ending today
+function getLastNDates(n: number): string[] {
+    const dates: string[] = [];
+    for (let i = 0; i < n; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        dates.push(d.toISOString().split('T')[0]);
+    }
+    return dates;
+}
+
 @Injectable()
 export class StatsService {
     constructor(
@@ -115,6 +126,120 @@ export class StatsService {
             habitStats,
             avgWakeUp,
             todayWakeUp
+        };
+    }
+
+    async getDisciplineScore(userId: string) {
+        const userObjId = new Types.ObjectId(userId);
+        const last7 = getLastNDates(7);
+        const last3 = getLastNDates(3);
+
+        const habits = await this.habitModel.find({ userId: userObjId }).exec();
+        const planners = await this.plannerModel.find({ userId: userObjId, date: { $in: last7 } }).exec();
+        const tasks = await this.taskModel.find({ userId: userObjId }).exec();
+        const journals = await this.journalModel.find({ userId: userObjId }).exec();
+
+        // ── 1. Habit Consistency (40%) ────────────────────────────────────
+        // For each of the last 7 days, what fraction of habits were done?
+        let habitDayScores: number[] = [];
+        if (habits.length > 0) {
+            for (const dateStr of last7) {
+                const doneCnt = habits.filter(h => {
+                    const logs = h.logs instanceof Map ? (h.logs as Map<string, any[]>).get(dateStr) : (h.logs as any)?.[dateStr];
+                    return logs && Array.isArray(logs) && logs.length > 0;
+                }).length;
+                habitDayScores.push(doneCnt / habits.length);
+            }
+        }
+        const habitConsistency = habitDayScores.length > 0
+            ? Math.round((habitDayScores.reduce((a, b) => a + b, 0) / habitDayScores.length) * 100)
+            : 0;
+
+        // ── 2. Planner Adherence (30%) ────────────────────────────────────
+        // Average completion % across all blocks in last 7 planners
+        let plannerAdherence = 0;
+        if (planners.length > 0) {
+            let totalBlocks = 0;
+            let totalCompleted = 0;
+            planners.forEach(p => {
+                const planBlocks = p.blocks.filter((b: any) => b.plan && b.plan.trim() !== '');
+                totalBlocks += planBlocks.length;
+                totalCompleted += planBlocks.reduce((acc: number, b: any) => acc + (Number(b.completed) || 0), 0);
+            });
+            plannerAdherence = totalBlocks > 0 ? Math.round(totalCompleted / totalBlocks) : 0;
+        }
+
+        // ── 3. Streak Health (20%) ────────────────────────────────────────
+        const streak = this.calculateStreak(journals);
+        const streakScore = Math.min(100, Math.round((streak / 14) * 100));
+
+        // ── 4. Task Velocity (10%) ────────────────────────────────────────
+        const completedThisWeek = tasks.filter(t => {
+            if (t.status !== 'done') return false;
+            const updated = (t as any).updatedAt;
+            if (!updated) return false;
+            const diffDays = (Date.now() - new Date(updated).getTime()) / (1000 * 60 * 60 * 24);
+            return diffDays <= 7;
+        }).length;
+        const openTasks = tasks.filter(t => t.status !== 'done').length;
+        const velocityScore = openTasks > 0 ? Math.min(100, Math.round((completedThisWeek / Math.max(openTasks, 1)) * 100)) : (completedThisWeek > 0 ? 100 : 50);
+
+        // ── Composite Score ───────────────────────────────────────────────
+        const disciplineScore = Math.round(
+            habitConsistency * 0.4 +
+            plannerAdherence * 0.3 +
+            streakScore * 0.2 +
+            velocityScore * 0.1
+        );
+
+        // ── Failing Areas ─────────────────────────────────────────────────
+        const failingHabits = habits
+            .filter(h => {
+                const doneLast3 = last3.filter(d => {
+                    const logs = h.logs instanceof Map ? (h.logs as Map<string, any[]>).get(d) : (h.logs as any)?.[d];
+                    return logs && Array.isArray(logs) && logs.length > 0;
+                }).length;
+                return doneLast3 === 0;
+            })
+            .map(h => ({ name: h.name, color: h.color, daysMissed: 3 }));
+
+        const failingPlannerDays = planners
+            .filter(p => {
+                const planBlocks = p.blocks.filter((b: any) => b.plan && b.plan.trim() !== '');
+                if (planBlocks.length === 0) return false;
+                const avg = planBlocks.reduce((acc: number, b: any) => acc + (Number(b.completed) || 0), 0) / planBlocks.length;
+                return avg < 50;
+            })
+            .map(p => ({ date: p.date, completion: Math.round(p.blocks.filter((b: any) => b.plan).reduce((acc: number, b: any) => acc + (Number(b.completed) || 0), 0) / Math.max(p.blocks.filter((b: any) => b.plan).length, 1)) }))
+            .sort((a, b) => b.date.localeCompare(a.date))
+            .slice(0, 5);
+
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const stuckTasks = tasks
+            .filter(t => {
+                if (t.status === 'done') return false;
+                const updated = (t as any).updatedAt;
+                return updated && new Date(updated) < sevenDaysAgo;
+            })
+            .map(t => ({ title: t.title }))
+            .slice(0, 5);
+
+        return {
+            disciplineScore,
+            subScores: {
+                habitConsistency,
+                plannerAdherence,
+                streakScore,
+                velocityScore
+            },
+            streak,
+            failingHabits,
+            failingPlannerDays,
+            stuckTasks,
+            totalHabits: habits.length,
+            totalTasks: tasks.length,
+            completedThisWeek,
         };
     }
 

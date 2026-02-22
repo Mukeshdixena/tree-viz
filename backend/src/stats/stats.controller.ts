@@ -11,4 +11,10 @@ export class StatsController {
     async getDashboard(@Request() req) {
         return this.statsService.getDashboardStats(req.user.userId);
     }
+
+    @Get('discipline')
+    async getDiscipline(@Request() req) {
+        return this.statsService.getDisciplineScore(req.user.userId);
+    }
 }
+

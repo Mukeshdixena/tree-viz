@@ -16,31 +16,30 @@ Project QuotationManagementSystem_v2 {
 // ══════════════════════════════════════════════════════
 
 // user_type hierarchy:
-//   SUPER_ADMIN   → Platform owner (MTT team)
-//   DEALER_ADMIN  → Dealership owner / head
-//   BRANCH_MANAGER → Manages a specific branch
-//   SALES_MANAGER  → Manages a sales team under a branch
-//   SALES_EXEC     → Frontline salesperson
+//   SUPER_ADMIN → Platform owner (MTT admin team), no dealer_id
+//   DEALER      → Dealership owner / head admin
+//   MEMBER      → Any staff under a dealer (sales, manager, etc.)
 
 Table users {
   id              int           [pk, increment]
+
   // Identity
   name            varchar(100)  [not null]
   email           varchar(150)  [unique, note: 'Login credential']
-  mobile_no       varchar(15)   [unique, not null, note: 'Login credential']
+  mobile_no       varchar(15)   [unique, not null]
   password        varchar(255)  [not null]
   profile_url     varchar(500)
 
-  // Role & Type
-  user_type       varchar(20)   [not null, note: 'SUPER_ADMIN | DEALER_ADMIN | BRANCH_MANAGER | SALES_MANAGER | SALES_EXEC']
-  role_id         int           [ref: > roles.id, note: 'Fine-grained permission role']
+  // Type & Permission
+  user_type       varchar(15)   [not null, note: 'SUPER_ADMIN | DEALER | MEMBER']
+  role_id         int           [ref: > roles.id, note: 'Fine-grained permissions for MEMBERs']
 
-  // Dealer context (null for SUPER_ADMIN)
-  dealer_id       int           [ref: > users.id, note: 'Self-ref: which DEALER_ADMIN owns this user']
-  branch_id       int           [ref: > branches.id, note: 'Assigned branch (nullable for DEALER_ADMIN)']
-  team_id         int           [ref: > teams.id]
+  // Hierarchy links (null for SUPER_ADMIN)
+  dealer_id       int           [ref: > users.id, note: 'Which DEALER owns this MEMBER — null for DEALER & SUPER_ADMIN']
+  branch_id       int           [ref: > branches.id, note: 'Assigned branch — null for DEALER']
+  team_id         int           [ref: > teams.id,   note: 'Assigned team — null for DEALER']
 
-  // Dealer-only profile (only populated when user_type = DEALER_ADMIN)
+  // DEALER-only profile fields (ignored for SUPER_ADMIN & MEMBER)
   company_name    varchar(100)
   gst_number      varchar(20)
   pan_number      varchar(20)
@@ -52,31 +51,30 @@ Table users {
   state           varchar(100)
   pin_code        varchar(10)
 
-  // Quotation approval settings (dealer-level flags)
+  // DEALER-level approval settings
   cash_approval_required              boolean [default: false]
   finance_approval_required           boolean [default: false]
   allow_pdf_sharing_without_approval  boolean [default: false]
   allow_text_sharing_without_approval boolean [default: false]
 
-  // Session
+  // Session & Meta
   current_token   text
   is_active       boolean [default: true]
-  created_by      int     [ref: > users.id, note: 'Who created this user']
+  created_by      int     [ref: > users.id]
   created_at      timestamp
   updated_at      timestamp
 
   indexes {
-    (dealer_id)                          [name: 'idx_users_dealer']
-    (user_type)                          [name: 'idx_users_type']
-    (dealer_id, user_type)               [name: 'idx_users_dealer_type']
-    (dealer_id, branch_id)               [name: 'idx_users_branch']
-    (dealer_id, team_id)                 [name: 'idx_users_team']
+    (user_type)                [name: 'idx_users_type']
+    (dealer_id)                [name: 'idx_users_dealer']
+    (dealer_id, user_type)     [name: 'idx_users_dealer_type']
+    (dealer_id, branch_id)     [name: 'idx_users_branch']
+    (dealer_id, team_id)       [name: 'idx_users_team']
     (email)       [unique]
     (mobile_no)   [unique]
     (dealer_code) [unique]
   }
 }
-
 // ══════════════════════════════════════════════════════
 // TIER 2: STRUCTURE (Branches, Teams, Roles)
 // ══════════════════════════════════════════════════════

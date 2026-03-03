@@ -1,0 +1,546 @@
+Project QuotationManagementSystem_v2 {
+  database_type: 'MySQL'
+  Note: '''
+    Fresh build — Quotation Management System
+    ✅ Unified users table (no separate dealers/members)
+    ✅ No payment / plan features
+    ✅ Fully normalized vehicle catalog
+    ✅ Inventory as real rows (no JSON stock blobs)
+    ✅ All money fields as DECIMAL
+    ✅ Full composite indexing on every filter chain
+  '''
+}
+
+// ══════════════════════════════════════════════════════
+// TIER 1: USERS (Dealer + Members merged into one table)
+// ══════════════════════════════════════════════════════
+
+// user_type hierarchy:
+//   SUPER_ADMIN   → Platform owner (MTT team)
+//   DEALER_ADMIN  → Dealership owner / head
+//   BRANCH_MANAGER → Manages a specific branch
+//   SALES_MANAGER  → Manages a sales team under a branch
+//   SALES_EXEC     → Frontline salesperson
+
+Table users {
+  id              int           [pk, increment]
+  // Identity
+  name            varchar(100)  [not null]
+  email           varchar(150)  [unique, note: 'Login credential']
+  mobile_no       varchar(15)   [unique, not null, note: 'Login credential']
+  password        varchar(255)  [not null]
+  profile_url     varchar(500)
+
+  // Role & Type
+  user_type       varchar(20)   [not null, note: 'SUPER_ADMIN | DEALER_ADMIN | BRANCH_MANAGER | SALES_MANAGER | SALES_EXEC']
+  role_id         int           [ref: > roles.id, note: 'Fine-grained permission role']
+
+  // Dealer context (null for SUPER_ADMIN)
+  dealer_id       int           [ref: > users.id, note: 'Self-ref: which DEALER_ADMIN owns this user']
+  branch_id       int           [ref: > branches.id, note: 'Assigned branch (nullable for DEALER_ADMIN)']
+  team_id         int           [ref: > teams.id]
+
+  // Dealer-only profile (only populated when user_type = DEALER_ADMIN)
+  company_name    varchar(100)
+  gst_number      varchar(20)
+  pan_number      varchar(20)
+  dealer_code     varchar(15)   [unique, note: 'Auto-generated e.g. MTTMAH01']
+  dealer_brand    varchar(100)  [note: 'e.g. Tata, Maruti']
+  vehicle_type    varchar(20)   [default: 'PERSONAL', note: 'PERSONAL | EV | COMMERCIAL']
+  address         varchar(255)
+  city            varchar(100)
+  state           varchar(100)
+  pin_code        varchar(10)
+
+  // Quotation approval settings (dealer-level flags)
+  cash_approval_required              boolean [default: false]
+  finance_approval_required           boolean [default: false]
+  allow_pdf_sharing_without_approval  boolean [default: false]
+  allow_text_sharing_without_approval boolean [default: false]
+
+  // Session
+  current_token   text
+  is_active       boolean [default: true]
+  created_by      int     [ref: > users.id, note: 'Who created this user']
+  created_at      timestamp
+  updated_at      timestamp
+
+  indexes {
+    (dealer_id)                          [name: 'idx_users_dealer']
+    (user_type)                          [name: 'idx_users_type']
+    (dealer_id, user_type)               [name: 'idx_users_dealer_type']
+    (dealer_id, branch_id)               [name: 'idx_users_branch']
+    (dealer_id, team_id)                 [name: 'idx_users_team']
+    (email)       [unique]
+    (mobile_no)   [unique]
+    (dealer_code) [unique]
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// TIER 2: STRUCTURE (Branches, Teams, Roles)
+// ══════════════════════════════════════════════════════
+
+Table branches {
+  id               int          [pk, increment]
+  dealer_id        int          [not null, ref: > users.id, note: 'Must be a DEALER_ADMIN user']
+  branch_name      varchar(200) [not null]
+  branch_address   text
+  branch_email     varchar(100)
+  branch_contact   varchar(12)
+  bank_name        varchar(100)
+  account_number   varchar(100)
+  ifsc             varchar(20)
+  gst_no           varchar(20)
+  terms_conditions text
+  branch_logo      varchar(600)
+  user_signature   varchar(600)
+  is_active        boolean      [default: true]
+  created_at       timestamp
+  updated_at       timestamp
+
+  indexes {
+    (dealer_id)              [name: 'idx_branch_dealer']
+    (dealer_id, is_active)   [name: 'idx_branch_active']
+  }
+}
+
+Table teams {
+  id              int          [pk, increment]
+  dealer_id       int          [not null, ref: > users.id]
+  team_name       varchar(100) [not null]
+  parent_team_id  int          [ref: > teams.id, note: 'Self-ref for hierarchy trees']
+  created_at      timestamp
+  updated_at      timestamp
+
+  indexes {
+    (dealer_id, team_name)   [unique, name: 'idx_team_unique']
+    (dealer_id)              [name: 'idx_team_dealer']
+    (parent_team_id)         [name: 'idx_team_parent']
+  }
+}
+
+Table roles {
+  id          int          [pk, increment]
+  dealer_id   int          [not null, ref: > users.id]
+  role_name   varchar(100) [not null]
+  permissions json         [not null, note: 'e.g. {"create_quotation":true,"approve":false}']
+  created_at  timestamp
+  updated_at  timestamp
+
+  indexes {
+    (dealer_id)              [name: 'idx_role_dealer']
+    (dealer_id, role_name)   [unique, name: 'idx_role_unique']
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// TIER 3: VEHICLE CATALOG (3-level normalization)
+// ══════════════════════════════════════════════════════
+
+// Level 1: "Tiago" → stored ONCE per dealer
+Table vehicle_models {
+  id            int          [pk, increment]
+  dealer_id     int          [not null, ref: > users.id]
+  name          varchar(100) [not null, note: 'e.g. Tiago, Nexon, Altroz']
+  brand         varchar(100) [note: 'e.g. Tata, Maruti']
+  vehicle_type  varchar(20)  [default: 'PERSONAL', note: 'PERSONAL | EV | COMMERCIAL']
+  mileage       decimal(10,2)
+  load_capacity decimal(10,2) [default: 0]
+  created_at    timestamp
+  updated_at    timestamp
+
+  indexes {
+    (dealer_id, name)   [unique, name: 'idx_vmodel_unique']
+    (dealer_id)         [name: 'idx_vmodel_dealer']
+  }
+}
+
+// Level 2: "Tiago XM CNG 2026" → all PRICING lives here
+// ★ This single row replaces dozens of duplicate modelnames rows
+Table vehicle_variants {
+  id                  int          [pk, increment]
+  vehicle_model_id    int          [not null, ref: > vehicle_models.id]
+  vc_code             varchar(100) [not null, unique, note: 'Manufacturer vehicle code']
+  variant_name        varchar(100) [not null, note: 'e.g. XM, XZ+, XZA+ (S)']
+  fuel_type           varchar(20)  [not null, note: 'PETROL | DIESEL | CNG | ELECTRIC | HYBRID']
+  manufacturing_year  varchar(10)  [not null]
+
+  // Pricing (all DECIMAL — no varchar for money!)
+  ex_showroom_price   decimal(13,2) [not null, default: 0]
+  dm_post_gst         decimal(13,2) [default: 0]
+  dd_amount           decimal(13,2) [default: 0]
+
+  // RTO Variants
+  rto_normal          decimal(13,2) [default: 0]
+  rto_normal_scrap    decimal(13,2) [default: 0]
+  rto_bh              decimal(13,2) [default: 0]
+  rto_trc             decimal(13,2) [default: 0]
+  rto_school          decimal(13,2) [default: 0]
+  rto_taxi            decimal(13,2) [default: 0]
+  rto_route           decimal(13,2) [default: 0]
+  rto_ambulance       decimal(13,2) [default: 0]
+
+  // Charges
+  amc_amount          decimal(13,2) [default: 0]
+  trc_amount          decimal(13,2) [default: 0]
+  fast_tag            decimal(13,2) [default: 0]
+  scrap_cert_price    decimal(13,2) [default: 0]
+
+  // Offers embedded at variant level
+  consumer_offer      decimal(13,2) [default: 0]
+  corporate_offer     decimal(13,2) [default: 0]
+  green_bonus         decimal(13,2) [default: 0]
+  solar_offer         decimal(13,2) [default: 0]
+  exchange_scrap      decimal(13,2) [default: 0]
+
+  stock_last_updated_at timestamp
+  created_at            timestamp
+  updated_at            timestamp
+
+  indexes {
+    // ★ CRITICAL: Powers API 2 (FilterByYear), API 3 (FuelCounts), API 4 (VariantCount)
+    (vehicle_model_id, manufacturing_year, fuel_type)  [name: 'idx_variant_filter_chain']
+    // ★ CRITICAL: Powers API 5 (ColorByFuel)
+    (vehicle_model_id, fuel_type, variant_name)        [name: 'idx_variant_color_lookup']
+    (vc_code)           [unique, name: 'idx_variant_vc']
+    (vehicle_model_id)  [name: 'idx_variant_model']
+  }
+}
+
+// Color master — "Pristine White" stored ONCE globally
+Table colors {
+  id         int          [pk, increment]
+  name       varchar(100) [not null, unique]
+  hex_code   varchar(7)   [note: '#FFFFFF — for future UI color picker']
+  created_at timestamp
+}
+
+// Level 3: Final SKU = Variant + Color
+// Each row = 1 purchasable product unit definition
+Table vehicle_trims {
+  id                  int [pk, increment]
+  vehicle_variant_id  int [not null, ref: > vehicle_variants.id]
+  color_id            int [not null, ref: > colors.id]
+  created_at          timestamp
+  updated_at          timestamp
+
+  indexes {
+    (vehicle_variant_id, color_id)  [unique, name: 'idx_trim_unique']
+    (vehicle_variant_id)            [name: 'idx_trim_variant']
+    (color_id)                      [name: 'idx_trim_color']
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// TIER 4: INVENTORY (Replaces BranchStock JSON blob)
+// ══════════════════════════════════════════════════════
+
+// ★ KEY IMPROVEMENT:
+//    Old: BranchStock = {"1":3,"2":5} → can NOT SUM in SQL
+//    New: One row per branch per trim → SUM(quantity) is instant
+Table inventory {
+  id              int     [pk, increment]
+  trim_id         int     [not null, ref: > vehicle_trims.id]
+  dealer_id       int     [not null, ref: > users.id]
+  branch_id       int     [ref: > branches.id, note: 'null = dealer-level (zonal/plant stock)']
+  stock_type      varchar(10) [not null, note: 'BRANCH | ZONAL | PLANT']
+  quantity        int     [not null, default: 0]
+  last_updated_at timestamp
+  last_updated_by int     [ref: > users.id]
+
+  indexes {
+    // ★ CRITICAL: Powers StockSummary & all 6 filter APIs
+    (trim_id, branch_id, stock_type)   [unique, name: 'idx_inv_unique']
+    (dealer_id, stock_type)            [name: 'idx_inv_dealer_type']
+    (dealer_id, branch_id)             [name: 'idx_inv_branch']
+    (trim_id)                          [name: 'idx_inv_trim']
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// TIER 5: PRICING COMPONENTS
+// (Attached to variant, not duplicated per-row)
+// ══════════════════════════════════════════════════════
+
+Table insurance_companies {
+  id                  int          [pk, increment]
+  dealer_id           int          [not null, ref: > users.id]
+  company_name        varchar(255) [not null]
+  ins_co_dm_post_gst  decimal(12,2) [default: 0]
+  is_self             boolean      [default: false, note: 'true = dealer self-insurance']
+  is_active           boolean      [default: true]
+  created_at          timestamp
+  updated_at          timestamp
+
+  indexes {
+    (dealer_id)                      [name: 'idx_inscо_dealer']
+    (dealer_id, is_self)             [name: 'idx_insco_self']
+  }
+}
+
+// Insurance rate per variant per company
+Table variant_insurance_rates {
+  id                    int          [pk, increment]
+  vehicle_variant_id    int          [not null, ref: > vehicle_variants.id]
+  insurance_company_id  int          [not null, ref: > insurance_companies.id]
+  insurance_name        varchar(100) [not null, note: 'e.g. 5yr Comprehensive']
+  base_price            decimal(13,2) [not null, default: 0]
+  insurance_amount      decimal(13,2) [not null, default: 0]
+  ins_dm_post_gst       decimal(12,2) [default: 0]
+  provider_type         varchar(10)  [default: 'dealer', note: 'dealer | company']
+  created_at            timestamp
+  updated_at            timestamp
+
+  indexes {
+    (vehicle_variant_id, insurance_company_id)  [unique, name: 'idx_insrate_unique']
+    (vehicle_variant_id)                        [name: 'idx_insrate_variant']
+    (insurance_company_id)                      [name: 'idx_insrate_company']
+  }
+}
+
+// Accessories per variant (NOT per color/year!)
+Table variant_accessories {
+  id                  int          [pk, increment]
+  vehicle_variant_id  int          [not null, ref: > vehicle_variants.id]
+  dealer_id           int          [not null, ref: > users.id]
+  name                varchar(100) [not null]
+  price               decimal(13,2) [not null, default: 0]
+  acc_dm_post_gst     decimal(12,2) [default: 0]
+  created_at          timestamp
+  updated_at          timestamp
+
+  indexes {
+    (vehicle_variant_id)          [name: 'idx_acc_variant']
+    (dealer_id)                   [name: 'idx_acc_dealer']
+    (vehicle_variant_id, name)    [unique, name: 'idx_acc_unique']
+  }
+}
+
+// Value Added Services per variant
+Table variant_vas {
+  id                  int          [pk, increment]
+  vehicle_variant_id  int          [not null, ref: > vehicle_variants.id]
+  dealer_id           int          [not null, ref: > users.id]
+  vas_name            varchar(100) [not null]
+  vas_price           decimal(13,2) [not null, default: 0]
+  duration            varchar(100)
+  vas_dm_post_gst     decimal(12,2) [default: 0]
+  created_at          timestamp
+  updated_at          timestamp
+
+  indexes {
+    (vehicle_variant_id)          [name: 'idx_vas_variant']
+    (dealer_id)                   [name: 'idx_vas_dealer']
+    (vehicle_variant_id, vas_name) [unique, name: 'idx_vas_unique']
+  }
+}
+
+// Vehicle loyalty / consumer offers per variant
+Table variant_offers {
+  id                      int           [pk, increment]
+  vehicle_variant_id      int           [not null, ref: > vehicle_variants.id]
+  dealer_id               int           [not null, ref: > users.id]
+  offer_name              varchar(100)  [not null]
+  price                   decimal(13,2) [not null, default: 0]
+  dealer_share            decimal(7,2)  [default: 0]
+  offer_type              varchar(5)    [note: 'PV | EV | null = applies to both']
+  is_visible              boolean       [default: true]
+  other_offers_applicable boolean       [default: true]
+  created_at              timestamp
+  updated_at              timestamp
+
+  indexes {
+    (vehicle_variant_id)               [name: 'idx_offer_variant']
+    (dealer_id)                        [name: 'idx_offer_dealer']
+    (vehicle_variant_id, offer_name)   [unique, name: 'idx_offer_unique']
+    (vehicle_variant_id, offer_type)   [name: 'idx_offer_type']
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// TIER 6: QUOTATIONS (Pricing Snapshot Pattern)
+// ══════════════════════════════════════════════════════
+
+// ★ DESIGN RULE: Quotation stores a COMPLETE SNAPSHOT of all prices
+//    at booking time. Never join live pricing tables for PDF rendering.
+//    This ensures PDF accuracy even if prices change later.
+
+Table quotations {
+  id              int         [pk, increment]
+  code            varchar(60) [unique, note: 'e.g. 2026/CASH/01 — auto-generated']
+  dealer_id       int         [not null, ref: > users.id]
+  created_by      int         [not null, ref: > users.id, note: 'Sales exec who made it']
+  branch_id       int         [ref: > branches.id]
+  team_id         int         [ref: > teams.id]
+  trim_id         int         [not null, ref: > vehicle_trims.id, note: 'FK to the SKU']
+
+  // ── Customer ──────────────────────────────────────
+  customer_name        varchar(100) [not null]
+  customer_mobile_no   varchar(15)  [not null]
+  customer_email       varchar(255)
+  customer_address     text
+
+  // ── Vehicle Snapshot (denormalized for PDF permanence) ──
+  model_name           varchar(100) [not null]
+  variant_name         varchar(100) [not null]
+  fuel_type            varchar(20)  [not null]
+  color_name           varchar(100) [not null]
+  manufacturing_year   varchar(10)
+  vc_code              varchar(100)
+
+  // ── Pricing Snapshot ─────────────────────────────
+  ex_showroom_price    decimal(13,2) [default: 0]
+  dm_post_gst          decimal(13,2) [default: 0]
+  dd_amount            decimal(13,2) [default: 0]
+
+  rto_type             varchar(50)   [note: 'NORMAL | BH | TRC | SCHOOL | TAXI | etc.']
+  rto_amount           decimal(13,2) [default: 0]
+
+  insurance_amount     decimal(13,2) [default: 0]
+  insurance_company    varchar(255)
+  ins_co_dm_post_gst   decimal(13,2) [default: 0]
+  insurance_discount   decimal(13,2) [default: 0]
+
+  fast_tag             decimal(13,2) [default: 0]
+  amc_amount           decimal(13,2) [default: 0]
+  trc_amount           decimal(13,2) [default: 0]
+  scrap_cert_price     decimal(13,2) [default: 0]
+
+  accessories_snapshot json          [note: '[{name, price, dm_post_gst}]']
+  vas_snapshot         json          [note: '[{name, price, duration}]']
+  offers_snapshot      json          [note: '[{name, price, type, dealer_share}]']
+
+  quotation_discount   decimal(13,2) [default: 0]
+  retention_rate       decimal(7,2)  [default: 0]
+  retention_amount     decimal(13,2) [default: 0]
+  tcs_price            decimal(13,2) [default: 0]
+  billing_price        decimal(13,2) [default: 0]
+  final_deal_amount    decimal(13,2) [default: 0]
+  additional_charges   decimal(13,2) [default: 0]
+
+  // ── Finance ───────────────────────────────────────
+  hpn                  varchar(300)  [note: 'Hypothecation bank name']
+  payment_type         varchar(10)   [note: 'Cash | Finance']
+
+  // ── Status ────────────────────────────────────────
+  availability_status  varchar(10)   [default: 'pending', note: 'pending | booked | ordered | sold']
+  approval_status      varchar(10)   [default: 'Pending', note: 'Pending | Approved | Rejected']
+  selected_offer_type  varchar(5)    [note: 'PV | EV']
+  quotation_type       varchar(200)
+  quantity             int           [default: 1]
+
+  // ── Meta ──────────────────────────────────────────
+  remark               varchar(500)
+  date                 date
+  expected_purchase_date date
+  created_at           timestamp
+  updated_at           timestamp
+
+  indexes {
+    // ★ CRITICAL: Powers StockSummary (booked/sold counts by model+fuel)
+    (dealer_id, availability_status)                                          [name: 'idx_q_status']
+    (dealer_id, model_name, availability_status)                              [name: 'idx_q_model_status']
+    (dealer_id, model_name, manufacturing_year, availability_status)          [name: 'idx_q_year_status']
+    (dealer_id, model_name, manufacturing_year, fuel_type, availability_status) [name: 'idx_q_fuel_status']
+    (dealer_id, model_name, manufacturing_year, fuel_type, variant_name, availability_status) [name: 'idx_q_full_chain']
+    (trim_id, availability_status)                                            [name: 'idx_q_trim_status']
+    (created_by)                                                              [name: 'idx_q_creator']
+    (branch_id)                                                               [name: 'idx_q_branch']
+    (code)  [unique]
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// TIER 7: MEDIA ASSETS
+// (Replaces 3 separate tables: PriceLists + brochures + ComparisonModels)
+// ══════════════════════════════════════════════════════
+
+Table vehicle_media {
+  id                  int           [pk, increment]
+  dealer_id           int           [not null, ref: > users.id]
+  media_type          varchar(20)   [not null, note: 'BROCHURE | PRICE_LIST | COMPARISON_SHEET']
+  model               varchar(100)  [not null]
+  fuel_type           varchar(50)
+  manufacturing_year  varchar(10)
+  url                 varchar(1000) [not null]
+  vehicle_brand       varchar(100)
+  created_at          timestamp
+  updated_at          timestamp
+
+  indexes {
+    (dealer_id, model, fuel_type, media_type)   [unique, name: 'idx_media_unique']
+    (dealer_id, media_type)                     [name: 'idx_media_type']
+    (dealer_id, model)                          [name: 'idx_media_model']
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// TIER 8: ARCHIVE / AUDIT
+// ══════════════════════════════════════════════════════
+
+Table deleted_models {
+  id           int       [pk, increment]
+  original_id  int       [not null, note: 'The vehicle_trims.id that was removed']
+  dealer_id    int       [not null]
+  vc_code      varchar(100)
+  model_data   json      [not null, note: 'Full snapshot of deleted row for recovery']
+  deleted_at   timestamp [not null]
+  deleted_by   int       [ref: > users.id]
+
+  indexes {
+    (dealer_id)      [name: 'idx_del_dealer']
+    (deleted_at)     [name: 'idx_del_date']
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// ALL EXPLICIT REFS (for dbdiagram.io auto-layout)
+// ══════════════════════════════════════════════════════
+
+// Ref: users.dealer_id    > users.id
+// Ref: users.branch_id    > branches.id
+// Ref: users.team_id      > teams.id
+// Ref: users.role_id      > roles.id
+// Ref: users.created_by   > users.id
+
+// Ref: branches.dealer_id > users.id
+
+// Ref: teams.dealer_id      > users.id
+// Ref: teams.parent_team_id > teams.id
+
+// Ref: roles.dealer_id > users.id
+
+// Ref: vehicle_models.dealer_id        > users.id
+// Ref: vehicle_variants.vehicle_model_id > vehicle_models.id
+// Ref: vehicle_trims.vehicle_variant_id  > vehicle_variants.id
+// Ref: vehicle_trims.color_id            > colors.id
+
+// Ref: inventory.trim_id         > vehicle_trims.id
+// Ref: inventory.dealer_id       > users.id
+// Ref: inventory.branch_id       > branches.id
+// Ref: inventory.last_updated_by > users.id
+
+// Ref: insurance_companies.dealer_id > users.id
+
+// Ref: variant_insurance_rates.vehicle_variant_id   > vehicle_variants.id
+// Ref: variant_insurance_rates.insurance_company_id > insurance_companies.id
+
+// Ref: variant_accessories.vehicle_variant_id > vehicle_variants.id
+// Ref: variant_accessories.dealer_id          > users.id
+
+// Ref: variant_vas.vehicle_variant_id > vehicle_variants.id
+// Ref: variant_vas.dealer_id          > users.id
+
+// Ref: variant_offers.vehicle_variant_id > vehicle_variants.id
+// Ref: variant_offers.dealer_id          > users.id
+
+// Ref: quotations.dealer_id   > users.id
+// Ref: quotations.created_by  > users.id
+// Ref: quotations.branch_id   > branches.id
+// Ref: quotations.team_id     > teams.id
+// Ref: quotations.trim_id     > vehicle_trims.id
+
+// Ref: vehicle_media.dealer_id > users.id
+
+// Ref: deleted_models.deleted_by > users.id

@@ -110,7 +110,7 @@ const TaskBoard = () => {
                         <h3>{status.replace('-', ' ').toUpperCase()}</h3>
                         <div className="task-list">
                             {tasks.filter(t => t.status === status).map(task => (
-                                <div className="task-card" onClick={() => setEditingTask({ ...task })}>
+                                <div key={task._id} className="task-card" onClick={() => setEditingTask({ ...task })}>
                                     <div className="task-header">
                                         <span className={`priority-badge ${task.priority}`}>{task.priority}</span>
                                         <button onClick={(e) => { e.stopPropagation(); deleteTask(task._id); }} className="delete-btn"><Trash2 size={14} /></button>
